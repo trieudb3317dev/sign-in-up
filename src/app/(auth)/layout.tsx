@@ -82,9 +82,6 @@ function AuthLayoutContent({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black p-8">
-      <button onClick={() => router.push("/")} className="absolute top-8 left-8 px-4 py-2 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-md shadow hover:shadow-md">
-        Back to Home
-      </button>
       <div className="relative flex w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden">
         {/* Left panel */}
         <div
@@ -109,13 +106,13 @@ function AuthLayoutContent({
 
         {/* Right panel (card) */}
         <div className="relative w-full md:w-1/2 bg-white dark:bg-[#0b0b0b] p-10 md:p-16 rounded-tr-2xl rounded-br-2xl">
-          <button
+          {/* <button
             onClick={handleToggleTheme}
             aria-label="Toggle theme"
             className="absolute top-4 right-4 rounded-full p-2 bg-white shadow-md dark:bg-zinc-900"
           >
             {localTheme === "dark" ? "🌙" : localTheme === "light" ? "☀️" : "🖥️"}
-          </button>
+          </button> */}
           <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mb-6">
             {title ?? "Authenticate"}
           </h2>
