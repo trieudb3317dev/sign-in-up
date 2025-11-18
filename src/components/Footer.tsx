@@ -1,5 +1,5 @@
-import React from "react";
-import Link from "next/link";
+import React from 'react';
+import Link from 'next/link';
 
 export default function Footer() {
   return (
@@ -15,10 +15,26 @@ export default function Footer() {
         <div className="hidden md:block">
           <h4 className="text-lg font-semibold text-zinc-100 dark:text-zinc-100">Header Text</h4>
           <ul className="mt-4 space-y-4 text-sm">
-            <li><Link href="#" className="text-zinc-200 dark:text-zinc-200">Button</Link></li>
-            <li><Link href="#" className="text-zinc-200 dark:text-zinc-200">Button</Link></li>
-            <li><Link href="#" className="text-zinc-200 dark:text-zinc-200">Button</Link></li>
-            <li><Link href="#" className="text-zinc-200 dark:text-zinc-200">Button</Link></li>
+            <li>
+              <Link href="#" className="text-zinc-200 dark:text-zinc-200">
+                Button
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="text-zinc-200 dark:text-zinc-200">
+                Button
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="text-zinc-200 dark:text-zinc-200">
+                Button
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="text-zinc-200 dark:text-zinc-200">
+                Button
+              </Link>
+            </li>
           </ul>
         </div>
 

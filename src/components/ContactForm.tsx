@@ -1,41 +1,41 @@
-"use client";
+'use client';
 
-import React from "react";
-import Image from "next/image";
-import notify from "@/utils/notify";
+import React from 'react';
+import Image from 'next/image';
+import notify from '@/utils/notify';
 
 export default function ContactForm() {
-  const [name, setName] = React.useState("");
-  const [email, setEmail] = React.useState("");
-  const [subject, setSubject] = React.useState("");
-  const [type, setType] = React.useState("Advertising");
-  const [message, setMessage] = React.useState("");
+  const [name, setName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [subject, setSubject] = React.useState('');
+  const [type, setType] = React.useState('Advertising');
+  const [message, setMessage] = React.useState('');
   const [loading, setLoading] = React.useState(false);
 
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
   const reset = () => {
-    setName("");
-    setEmail("");
-    setSubject("");
-    setType("Advertising");
-    setMessage("");
+    setName('');
+    setEmail('');
+    setSubject('');
+    setType('Advertising');
+    setMessage('');
   };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return notify("error", "Please enter your name.");
-    if (!email.trim() || !validateEmail(email)) return notify("error", "Please enter a valid email.");
-    if (!subject.trim()) return notify("error", "Please enter subject.");
-    if (!message.trim()) return notify("error", "Please enter your message.");
+    if (!name.trim()) return notify('error', 'Please enter your name.');
+    if (!email.trim() || !validateEmail(email)) return notify('error', 'Please enter a valid email.');
+    if (!subject.trim()) return notify('error', 'Please enter subject.');
+    if (!message.trim()) return notify('error', 'Please enter your message.');
     try {
       setLoading(true);
       // Placeholder for real API call
       await new Promise((res) => setTimeout(res, 700));
-      notify("success", "Message sent. We will contact you soon.");
+      notify('success', 'Message sent. We will contact you soon.');
       reset();
     } catch (err) {
-      notify("error", "Failed to send message. Try again.");
+      notify('error', 'Failed to send message. Try again.');
     } finally {
       setLoading(false);
     }
@@ -130,7 +130,7 @@ export default function ContactForm() {
                   disabled={loading}
                   className="px-8 py-3 rounded-xl bg-black text-white hover:opacity-95 disabled:opacity-60"
                 >
-                  {loading ? "Submitting..." : "Submit"}
+                  {loading ? 'Submitting...' : 'Submit'}
                 </button>
               </div>
             </form>

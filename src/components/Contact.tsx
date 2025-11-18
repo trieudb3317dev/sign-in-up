@@ -1,29 +1,28 @@
-"use client";
+'use client';
 
-import React from "react";
-import Image from "next/image";
-import notify from "@/utils/notify";
+import React from 'react';
+import Image from 'next/image';
+import notify from '@/utils/notify';
 
 export default function Contact() {
-  const [email, setEmail] = React.useState("");
+  const [email, setEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
 
-  const validateEmail = (v: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+  const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !validateEmail(email)) {
-      return notify("error", "Please enter a valid email address.");
+      return notify('error', 'Please enter a valid email address.');
     }
     try {
       setLoading(true);
       // TODO: send to API / subscribe endpoint
       await new Promise((r) => setTimeout(r, 700));
-      notify("success", "Subscribed! Check your inbox.");
-      setEmail("");
+      notify('success', 'Subscribed! Check your inbox.');
+      setEmail('');
     } catch (err) {
-      notify("error", "Subscription failed. Try again.");
+      notify('error', 'Subscription failed. Try again.');
     } finally {
       setLoading(false);
     }
@@ -48,11 +47,14 @@ export default function Contact() {
               Deliciousness to your inbox
             </h3>
             <p className="mt-3 text-sm md:text-base text-zinc-600 dark:text-zinc-300 max-w-2xl mx-auto">
-              Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliquot enim ad minim
+              Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et
+              dolore magna aliquot enim ad minim
             </p>
 
             <form onSubmit={onSubmit} className="mt-8 flex items-center justify-center gap-3">
-              <label htmlFor="newsletter" className="sr-only">Your email address</label>
+              <label htmlFor="newsletter" className="sr-only">
+                Your email address
+              </label>
               <input
                 id="newsletter"
                 type="email"
@@ -67,7 +69,7 @@ export default function Contact() {
                 disabled={loading}
                 className="px-5 py-3 rounded-full bg-black text-white shadow hover:opacity-95 disabled:opacity-60"
               >
-                {loading ? "Subscribing..." : "Subscribe"}
+                {loading ? 'Subscribing...' : 'Subscribe'}
               </button>
             </form>
           </div>

@@ -10,10 +10,10 @@ const notify = (error: SweetAlertIcon, title: string) => {
     didOpen: (toast) => {
       toast.onmouseenter = Swal.stopTimer;
       toast.onmouseleave = Swal.resumeTimer;
-    }
+    },
   }).fire({
     icon: error,
-    title: title
+    title: title,
   });
 };
 

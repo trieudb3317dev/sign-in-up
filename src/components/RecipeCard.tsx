@@ -1,7 +1,7 @@
-import React from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
 
 type Recipe = {
   id: string | number;
@@ -12,13 +12,7 @@ type Recipe = {
   liked?: boolean;
 };
 
-export default function RecipeCard({
-  item,
-  onLike,
-}: {
-  item: Recipe;
-  onLike?: (id: string | number) => void;
-}) {
+export default function RecipeCard({ item, onLike }: { item: Recipe; onLike?: (id: string | number) => void }) {
   const [liked, setLiked] = React.useState<boolean>(!!item.liked);
 
   const toggleLike = (e?: React.MouseEvent) => {
@@ -41,12 +35,18 @@ export default function RecipeCard({
             onClick={toggleLike}
             className="absolute top-3 right-3 z-10 rounded-full bg-white/80 dark:bg-black/60 p-2 shadow backdrop-blur-sm"
           >
-            {liked ? <AiFillHeart className="text-red-500" size={18} /> : <AiOutlineHeart className="text-zinc-700" size={18} />}
+            {liked ? (
+              <AiFillHeart className="text-red-500" size={18} />
+            ) : (
+              <AiOutlineHeart className="text-zinc-700" size={18} />
+            )}
           </button>
         </div>
 
         <div className="p-4">
-          <h3 className="text-sm md:text-base font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">{item.title}</h3>
+          <h3 className="text-sm md:text-base font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-2">
+            {item.title}
+          </h3>
 
           <div className="mt-3 flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
             <div className="flex items-center gap-3">
@@ -54,13 +54,13 @@ export default function RecipeCard({
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
                 </svg>
-                <span>{item.time ?? "30 Minutes"}</span>
+                <span>{item.time ?? '30 Minutes'}</span>
               </span>
               <span className="inline-flex items-center gap-2">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3 6h18v12H3z" />
                 </svg>
-                <span>{item.category ?? "Snack"}</span>
+                <span>{item.category ?? 'Snack'}</span>
               </span>
             </div>
           </div>

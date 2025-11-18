@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import React from "react";
-import Image from "next/image";
-import { AiOutlineHeart, AiOutlineComment, AiOutlineFacebook, AiOutlineInstagram } from "react-icons/ai";
+import React from 'react';
+import Image from 'next/image';
+import { AiOutlineHeart, AiOutlineComment, AiOutlineFacebook, AiOutlineInstagram } from 'react-icons/ai';
 
 export default function BlogCard({
-  image = "/images/blog/1.jpg",
-  caption = "Sample caption for this post",
+  image = '/images/blog/1.jpg',
+  caption = 'Sample caption for this post',
   likes = 44486,
-  date = "September 10",
+  date = 'September 10',
 }: {
   image?: string;
   caption?: string;
@@ -16,7 +16,7 @@ export default function BlogCard({
   date?: string;
 }) {
   // normalize image path (ensure starts with "/")
-  const src = image.startsWith("/") ? image : `/${image.replace(/^(\.\/|(\.\.\/)+|public\/)/, "")}`;
+  const src = image.startsWith('/') ? image : `/${image.replace(/^(\.\/|(\.\.\/)+|public\/)/, '')}`;
 
   return (
     <article className="bg-white dark:bg-[#071018] rounded-xl shadow-sm overflow-hidden">
@@ -27,7 +27,9 @@ export default function BlogCard({
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-sm">F</div>
+            <div className="h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-sm">
+              F
+            </div>
             <div>
               <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Foodieland.</div>
               <div className="text-xs text-zinc-500 dark:text-zinc-400">Tokyo, Japan</div>
@@ -36,9 +38,7 @@ export default function BlogCard({
           <div className="text-xs text-zinc-500 dark:text-zinc-400">{/* optional menu */}...</div>
         </div>
 
-        <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-3 line-clamp-3">
-          {caption}
-        </p>
+        <p className="text-sm text-zinc-700 dark:text-zinc-300 mb-3 line-clamp-3">{caption}</p>
 
         <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
           <div className="flex items-center gap-3">

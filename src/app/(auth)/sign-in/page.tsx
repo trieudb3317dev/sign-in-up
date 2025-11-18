@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useAuthContext } from "../../../../context/AuthContext";
-import { validateName, validatePassword, validatePhone } from "@/utils/validate";
+import React from 'react';
+import { useAuthContext } from '../../../../context/AuthContext';
+import { validateName, validatePassword, validatePhone } from '@/utils/validate';
 
-import { IoIosEye } from "react-icons/io";
-import { IoIosEyeOff } from "react-icons/io";
-import notify from "@/utils/notify";
+import { IoIosEye } from 'react-icons/io';
+import { IoIosEyeOff } from 'react-icons/io';
+import notify from '@/utils/notify';
 
 export default function SignInPage() {
   const { tab } = useAuthContext();
-  const [username, setUsername] = React.useState("");
-  const [mobile, setMobile] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const [username, setUsername] = React.useState('');
+  const [mobile, setMobile] = React.useState('');
+  const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [remember, setRemember] = React.useState(false);
 
@@ -22,20 +22,18 @@ export default function SignInPage() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (tab === "username" && usernameError) return notify("error", usernameError);
-    if (tab === "mobile" && phoneError) return notify("error", phoneError);
-    if (passwordError) return notify("error", passwordError);
-    if (!remember) return notify("error", "You must agree to remember me.");
+    if (tab === 'username' && usernameError) return notify('error', usernameError);
+    if (tab === 'mobile' && phoneError) return notify('error', phoneError);
+    if (passwordError) return notify('error', passwordError);
+    if (!remember) return notify('error', 'You must agree to remember me.');
     // TODO: xử lý submit
-    notify("success", "Sign in successful!");
-    console.log("submit",
-      tab === "username" ? { username, password } : { mobile, password },
-    );
+    notify('success', 'Sign in successful!');
+    console.log('submit', tab === 'username' ? { username, password } : { mobile, password });
   };
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {tab === "username" ? (
+      {tab === 'username' ? (
         <label className="block">
           <div className="text-xs text-zinc-500 mb-2">Username</div>
           <input
@@ -67,7 +65,7 @@ export default function SignInPage() {
         <div className="text-xs text-zinc-500 mb-2">Password</div>
         <div className="relative">
           <input
-            type={showPassword ? "text" : "password"}
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -76,7 +74,7 @@ export default function SignInPage() {
           />
           <button
             type="button"
-            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
             onClick={() => setShowPassword((s) => !s)}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400"
           >

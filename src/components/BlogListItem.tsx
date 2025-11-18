@@ -1,6 +1,6 @@
-import React from "react";
-import Image from "next/image";
-import Link from "next/link";
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 export default function BlogListItem({
   post,
@@ -21,7 +21,10 @@ export default function BlogListItem({
       </Link>
 
       <div className="flex-1">
-        <Link href={`/blog/${post.id}`} className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100 hover:underline">
+        <Link
+          href={`/blog/${post.id}`}
+          className="text-lg md:text-xl font-semibold text-zinc-900 dark:text-zinc-100 hover:underline"
+        >
           {post.title}
         </Link>
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{post.excerpt}</p>
