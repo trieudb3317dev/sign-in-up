@@ -7,7 +7,8 @@ type Recipe = {
   id: string | number;
   image: string;
   title: string;
-  time?: string;
+  time_to_cook?: string;
+  main_ingredients?: string[];  
   category?: string;
   liked?: boolean;
 };
@@ -54,13 +55,13 @@ export default function RecipeCard({ item, onLike }: { item: Recipe; onLike?: (i
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
                 </svg>
-                <span>{item.time ?? '30 Minutes'}</span>
+                <span>{item.time_to_cook ?? '30 Minutes'}</span>
               </span>
               <span className="inline-flex items-center gap-2">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3 6h18v12H3z" />
                 </svg>
-                <span>{item.category ?? 'Snack'}</span>
+                <span>{item.main_ingredients?.join(', ') ?? 'Snack'}</span>
               </span>
             </div>
           </div>

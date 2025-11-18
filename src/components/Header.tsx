@@ -45,7 +45,7 @@ export default function Header() {
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">
-              Logo
+              Recipes Chef
             </Link>
 
             <nav className="hidden md:flex items-center gap-2">
@@ -60,7 +60,8 @@ export default function Header() {
               </Link>
 
               <Link
-                href="/recipes"
+                href="/"
+                // href="/recipes"
                 className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
               >
                 <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
@@ -165,11 +166,18 @@ export default function Header() {
               Home
             </Link>
             <Link
-              href="/about"
+              href="/"
               onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 rounded hover:bg-black/5 dark:hover:bg-white/8"
             >
-              About
+              Recipes
+            </Link>
+            <Link
+              href="/blog"
+              onClick={() => setMobileOpen(false)}
+              className="block px-3 py-2 rounded hover:bg-black/5 dark:hover:bg-white/8"
+            >
+              Blog
             </Link>
             <Link
               href="/contact"
@@ -179,12 +187,21 @@ export default function Header() {
               Contact
             </Link>
             <Link
-              href="/button"
+              href="/about"
               onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 rounded hover:bg-black/5 dark:hover:bg-white/8"
             >
-              Button
+              About us
             </Link>
+            <div className="mt-2 border-t pt-2">
+              <Link
+                href="/sign-in"
+                onClick={() => setMobileOpen(false)}
+                className="block px-3 py-2 rounded bg-zinc-900 text-white text-center dark:bg-white dark:text-black"
+              >
+                Sign In
+              </Link>
+            </div>
             <div className="mt-2 border-t pt-2">
               <Link
                 href="/sign-up"

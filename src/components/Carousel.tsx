@@ -8,6 +8,9 @@ type Slide = {
   title?: string;
   description?: string;
   image?: string;
+  time_to_cook?: string;
+  main_ingredients?: string[];
+  created_by?: number;
 };
 
 export default function Carousel({
@@ -18,6 +21,9 @@ export default function Carousel({
       description:
         'Lorem ipsum dolor sit amet, consectetuipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqut enim ad minim ',
       image: '/images/auth-left.jpg',
+	  time_to_cook: '30 Minutes',
+	  main_ingredients: ['Chicken', 'Spices', 'Oil'],
+	  created_by: 1,
     },
     {
       id: 2,
@@ -25,6 +31,9 @@ export default function Carousel({
       description:
         'Lorem ipsum dolor sit amet, consectetuipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqut enim ad minim ',
       image: '/images/auth-left.jpg',
+	  time_to_cook: '30 Minutes',
+	  main_ingredients: ['Chicken', 'Spices', 'Oil'],
+	  created_by: 1,
     },
     {
       id: 3,
@@ -32,6 +41,9 @@ export default function Carousel({
       description:
         'Lorem ipsum dolor sit amet, consectetuipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqut enim ad minim ',
       image: '/images/auth-left.jpg',
+	  time_to_cook: '30 Minutes',
+	  main_ingredients: ['Chicken', 'Spices', 'Oil'],
+	  created_by: 1,
     },
   ],
   interval = 4500,
@@ -55,7 +67,7 @@ export default function Carousel({
     <div className="relative">
       <div className="overflow-hidden">
         {/* only render current slide's Banner to keep DOM small */}
-        <Banner title={slides[index].title} description={slides[index].description} image={slides[index].image} />
+        <Banner bannerItem={slides[index]} />
       </div>
 
       {/* controls */}

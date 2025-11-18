@@ -4,26 +4,28 @@ import React from 'react';
 import Image from 'next/image';
 import resolveImage from '@/utils/resolveImage';
 
-type BannerProps = {
+type Slide = {
+  id: string | number;
   title?: string;
   description?: string;
-  time?: string;
-  tag?: string;
+  image?: string;
+  time_to_cook?: string;
+  main_ingredients?: string[];
+  created_by?: number;
+};
+
+type BannerProps = {
+  bannerItem?: Slide;
   authorName?: string;
   authorDate?: string;
-  image?: string;
 };
 
 export default function Banner({
-  title = 'Spicy delicious chicken wings',
-  description = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliquot enim ad minim',
-  time = '30 Minutes',
-  tag = 'Chicken',
   authorName = 'John Smith',
   authorDate = '15 March 2022',
-  image = '/images/auth-left.jpg',
+  bannerItem,
 }: BannerProps) {
-  const resolvedImage = resolveImage(image);
+  const resolvedImage = resolveImage(bannerItem?.image || '/images/auth-left.jpg');
 
   return (
     <section className="w-full">
@@ -37,17 +39,17 @@ export default function Banner({
             </div>
 
             <h2 className="text-4xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-50 leading-tight mb-4">
-              {title}
+              {bannerItem?.title}
             </h2>
 
-            <p className="text-zinc-600 dark:text-zinc-300 max-w-xl mb-6">{description}</p>
+            <p className="text-zinc-600 dark:text-zinc-300 max-w-xl mb-6">{bannerItem?.description}</p>
 
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="inline-flex items-center gap-2 bg-white/80 dark:bg-white/5 border border-zinc-200 dark:border-zinc-700 rounded-full px-3 py-1 text-xs text-zinc-700 dark:text-zinc-200">
-                🕒 <span>{time}</span>
+                🕒 <span>{bannerItem?.time_to_cook}</span>
               </span>
               <span className="inline-flex items-center gap-2 bg-white/80 dark:bg-white/5 border border-zinc-200 dark:border-zinc-700 rounded-full px-3 py-1 text-xs text-zinc-700 dark:text-zinc-200">
-                🍗 <span>{tag}</span>
+                🍗 <span>{bannerItem?.main_ingredients?.join(', ')}</span>
               </span>
             </div>
 
@@ -77,7 +79,7 @@ export default function Banner({
             <div className="w-full h-80 md:h-[420px] relative">
               <Image
                 src={resolvedImage}
-                alt={title}
+                alt={bannerItem?.title || 'Banner Image'}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover rounded-l-none rounded-r-3xl md:rounded-l-none md:rounded-r-3xl"

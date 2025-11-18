@@ -10,6 +10,8 @@ type Recipe = {
   title: string;
   time?: string;
   category?: string;
+  time_to_cook?: string;
+  main_ingredients?: string[];
   liked?: boolean;
 };
 
@@ -20,6 +22,8 @@ export default function RecipesGrid({ items }: { items?: Recipe[] }) {
       image: '/images/recipes/1.jpg',
       title: 'Big and Juicy Wagyu Beef Cheeseburger',
       time: '30 Minutes',
+      time_to_cook: '30 Minutes',
+      main_ingredients: ['Beef', 'Cheese', 'Bun'],
       category: 'Snack',
     },
     {
@@ -27,6 +31,8 @@ export default function RecipesGrid({ items }: { items?: Recipe[] }) {
       image: '/images/recipes/2.jpg',
       title: 'Fresh Lime Roasted Salmon with Ginger Sauce',
       time: '30 Minutes',
+      time_to_cook: '30 Minutes',
+      main_ingredients: ['Salmon', 'Lime', 'Ginger'],
       category: 'Fish',
     },
     {
@@ -34,6 +40,8 @@ export default function RecipesGrid({ items }: { items?: Recipe[] }) {
       image: '/images/recipes/3.jpg',
       title: 'Strawberry Oatmeal Pancake with Honey Syrup',
       time: '30 Minutes',
+      time_to_cook: '30 Minutes',
+      main_ingredients: ['Strawberry', 'Oats', 'Honey'],
       category: 'Breakfast',
     },
     {
@@ -41,6 +49,8 @@ export default function RecipesGrid({ items }: { items?: Recipe[] }) {
       image: '/images/recipes/4.jpg',
       title: 'Fresh and Healthy Mixed Mayonnaise Salad',
       time: '30 Minutes',
+      time_to_cook: '30 Minutes',
+      main_ingredients: ['Lettuce', 'Tomato', 'Cucumber'],
       category: 'Healthy',
     },
     {
@@ -48,6 +58,8 @@ export default function RecipesGrid({ items }: { items?: Recipe[] }) {
       image: '/images/recipes/5.jpg',
       title: 'Chicken Meatballs with Cream Cheese',
       time: '30 Minutes',
+      time_to_cook: '30 Minutes',
+      main_ingredients: ['Chicken', 'Cheese', 'Spices'],
       category: 'Meat',
     },
     {
@@ -55,6 +67,8 @@ export default function RecipesGrid({ items }: { items?: Recipe[] }) {
       image: '/images/recipes/6.jpg',
       title: 'Fruity Pancake with Orange & Blueberry',
       time: '30 Minutes',
+      time_to_cook: '30 Minutes',
+      main_ingredients: ['Orange', 'Blueberry', 'Flour'],
       category: 'Sweet',
     },
     {
@@ -62,6 +76,8 @@ export default function RecipesGrid({ items }: { items?: Recipe[] }) {
       image: '/images/recipes/7.jpg',
       title: 'The Best Easy One Pot Chicken and Rice',
       time: '30 Minutes',
+      time_to_cook: '30 Minutes',
+      main_ingredients: ['Chicken', 'Rice', 'Vegetables'],
       category: 'Snack',
     },
     {
@@ -69,6 +85,8 @@ export default function RecipesGrid({ items }: { items?: Recipe[] }) {
       image: '/images/recipes/8.jpg',
       title: 'The Creamiest Creamy Chicken and Bacon Pasta',
       time: '30 Minutes',
+      time_to_cook: '30 Minutes',
+      main_ingredients: ['Chicken', 'Bacon', 'Pasta'],
       category: 'Noodles',
     },
     {
@@ -76,6 +94,8 @@ export default function RecipesGrid({ items }: { items?: Recipe[] }) {
       image: '/images/recipes/9.jpg',
       title: 'Tasty Meat Skewers with Herbs',
       time: '25 Minutes',
+      time_to_cook: '25 Minutes',
+      main_ingredients: ['Beef', 'Bell Peppers', 'Onion'],
       category: 'Grill',
     },
   ];

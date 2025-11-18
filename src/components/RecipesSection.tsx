@@ -5,7 +5,8 @@ type Recipe = {
   id: number | string;
   image: string;
   title: string;
-  time?: string;
+  time_to_cook?: string;
+  main_ingredients?: string[];
   category?: string;
 };
 
@@ -14,56 +15,65 @@ const SAMPLE: Recipe[] = [
     id: 1,
     image: '/images/recipes/1.jpg',
     title: 'Mixed Tropical Fruit Salad with Superfood Boosts',
-    time: '30 Minutes',
+    time_to_cook: '30 Minutes',
+    main_ingredients: ['Fruit', 'Superfood', 'Salad'],
     category: 'Healthy',
   },
   {
     id: 2,
     image: '/images/recipes/2.jpg',
     title: 'Big and Juicy Wagyu Beef Cheeseburger',
-    time: '30 Minutes',
+    time_to_cook: '30 Minutes',
+    main_ingredients: ['Beef', 'Cheese', 'Bun'],
     category: 'Western',
   },
   {
     id: 3,
     image: '/images/recipes/3.jpg',
     title: 'Healthy Japanese Fried Rice with Asparagus',
-    time: '30 Minutes',
+    time_to_cook: '30 Minutes',
+    main_ingredients: ['Rice', 'Asparagus', 'Egg'],
     category: 'Healthy',
   },
   {
     id: 4,
     image: '/images/recipes/4.jpg',
     title: 'Cauliflower Walnut Vegetarian Taco Meat',
-    time: '30 Minutes',
+    time_to_cook: '30 Minutes',
+    main_ingredients: ['Cauliflower', 'Walnut', 'Spices'],
     category: 'Eastern',
   },
   {
     id: 5,
     image: '/images/recipes/5.jpg',
     title: 'Rainbow Chicken Salad with Almond Honey Mustard Dressing',
-    time: '30 Minutes',
+
+    time_to_cook: '30 Minutes',
+    main_ingredients: ['Chicken', 'Almond', 'Honey'],
     category: 'Healthy',
   },
   {
     id: 6,
     image: '/images/recipes/6.jpg',
     title: 'Barbeque Spicy Sandwiches with Chips',
-    time: '30 Minutes',
+    time_to_cook: '30 Minutes',
+    main_ingredients: ['Bread', 'Spices', 'Chips'],
     category: 'Snack',
   },
   {
     id: 7,
     image: '/images/recipes/7.jpg',
     title: 'Firecracker Vegan Lettuce Wraps - Spicy!',
-    time: '30 Minutes',
+    time_to_cook: '30 Minutes',
+    main_ingredients: ['Lettuce', 'Spices', 'Vegan'],
     category: 'Seafood',
   },
   {
     id: 8,
     image: '/images/recipes/8.jpg',
     title: 'Chicken Ramen Soup with Mushroom',
-    time: '30 Minutes',
+    time_to_cook: '30 Minutes',
+    main_ingredients: ['Chicken', 'Noodles', 'Mushroom'],
     category: 'Japanese',
   },
 ];
@@ -96,8 +106,9 @@ export default function RecipesSection({ items }: { items?: Recipe[] }) {
                 id: it.id,
                 image: it.image,
                 title: it.title,
-                time: it.time,
                 category: it.category,
+                time_to_cook: it.time_to_cook,
+                main_ingredients: it.main_ingredients,
               }}
             />
           ))}
