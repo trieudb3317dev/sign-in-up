@@ -3,28 +3,34 @@
 import React from 'react';
 import Image from 'next/image';
 import Pagination from './Pagination';
+import { useCategories } from '@/hooks/useCategories';
 
 type Category = {
-  id: string | number;
-  image: string; // path under public, e.g. /images/categories/breakfast.png
-  title: string;
-  count: number;
+  id: number;
+  name: string;
+  slug: string;
+  image_url: string;
+  description: string;
+  created_at: string;
+  recipe_count: number;
 };
 
-export default function Categories({ items }: { items?: Category[] }) {
-  const defaultItems: Category[] = [
-    { id: 1, image: '/images/categories/breakfast.png', title: 'Breakfast', count: 124 },
-    { id: 2, image: '/images/categories/vegan.png', title: 'Vegan', count: 86 },
-    { id: 3, image: '/images/categories/meat.png', title: 'Meat', count: 64 },
-    { id: 4, image: '/images/categories/dessert.png', title: 'Dessert', count: 52 },
-    { id: 5, image: '/images/categories/lunch.png', title: 'Lunch', count: 41 },
-    { id: 6, image: '/images/categories/chocolate.png', title: 'Chocolate', count: 18 },
-    { id: 7, image: '/images/categories/salad.png', title: 'Salad', count: 30 },
-    { id: 8, image: '/images/categories/soup.png', title: 'Soup', count: 27 },
-    { id: 9, image: '/images/categories/drink.png', title: 'Drinks', count: 22 },
-  ];
+export default function Categories({}: { items?: Category[] }) {
+  const defaultItems: Category[] = [];
 
-  const list = items && items.length ? items : defaultItems;
+  const { categories } = useCategories();
+
+  const itemsFromHook =
+    categories && categories.length
+      ? categories.map((c: Category) => ({
+          id: c.id,
+          image_url: c.image_url,
+          name: c.name,
+          recipe_count: c.recipe_count,
+        }))
+      : [];
+
+  const list = itemsFromHook && itemsFromHook.length ? itemsFromHook : defaultItems;
 
   // pagination state (used on desktop)
   const [page, setPage] = React.useState(1);
@@ -64,19 +70,19 @@ export default function Categories({ items }: { items?: Category[] }) {
         {isDesktop ? (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-              {pagedItems.map((c) => (
+              {pagedItems.map((c: Category) => (
                 <article
                   key={c.id}
                   className="bg-white dark:bg-[#0b0b0b] rounded-2xl p-5 flex flex-col items-center gap-4 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="bg-white/60 dark:bg-white/5 rounded-xl p-4">
                     <div className="relative w-20 h-20 md:w-24 md:h-24">
-                      <Image src={c.image} alt={c.title} fill className="object-contain" />
+                      <Image src={c.image_url} alt={c.name} fill className="object-contain" />
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{c.title}</div>
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{c.count} recipes</div>
+                    <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{c.name}</div>
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{c.recipe_count} recipes</div>
                   </div>
                 </article>
               ))}
@@ -91,19 +97,19 @@ export default function Categories({ items }: { items?: Category[] }) {
           <>
             <div className="overflow-x-auto py-2 -mx-2">
               <div className="flex gap-6 px-2">
-                {pagedItems.map((c) => (
+                {pagedItems.map((c: Category) => (
                   <article
                     key={c.id}
                     className="min-w-[140px] flex-shrink-0 bg-white dark:bg-[#0b0b0b] rounded-2xl p-5 flex flex-col items-center gap-4 shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="bg-white/60 dark:bg-white/5 rounded-xl p-4">
                       <div className="relative w-20 h-20">
-                        <Image src={c.image} alt={c.title} fill className="object-contain" />
+                        <Image src={c.image_url} alt={c.name} fill className="object-contain" />
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{c.title}</div>
-                      <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{c.count} recipes</div>
+                      <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{c.name}</div>
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">{c.recipe_count} recipes</div>
                     </div>
                   </article>
                 ))}

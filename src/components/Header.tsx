@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useTheme } from '@/components/ThemeProvider';
 import { MdDarkMode, MdLightMode } from 'react-icons/md';
 import { IoMenuOutline } from 'react-icons/io5';
+import { useAuth } from '@/hooks/useAuth';
+import Image from 'next/image';
 
 export default function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -12,6 +14,9 @@ export default function Header() {
 
   // mobile menu state
   const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  // useContext to track scroll position
+  const { loadding, logout, auth } = useAuth();
 
   React.useEffect(() => {
     const onScroll = () => {
@@ -31,6 +36,13 @@ export default function Header() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  const onLogout = async () => {
+    if (logout) {
+      await logout();
+      // window.location.href = '/';
+    }
+  };
+
   // compute background and border based on explicit theme (not on scroll)
   const bgClass = theme === 'dark' ? 'bg-black/60 text-white' : 'bg-white text-black';
   const borderClass = theme === 'dark' ? 'border-white/5' : 'border-black/5';
@@ -42,66 +54,66 @@ export default function Header() {
           scrolled ? `backdrop-blur-sm shadow-sm border-b ${borderClass}` : 'border-b-0'
         }`}
       >
-        <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
+        <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href="/" className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">
               Recipes Chef
             </Link>
+            {auth && auth.role === undefined && (
+              <nav className="hidden md:flex items-center gap-2">
+                <Link
+                  href="/"
+                  className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+                >
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
+                    Home
+                  </span>
+                  <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
+                </Link>
 
-            <nav className="hidden md:flex items-center gap-2">
-              <Link
-                href="/"
-                className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
-              >
-                <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
-                  Home
-                </span>
-                <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
-              </Link>
+                <Link
+                  href="/"
+                  // href="/recipes"
+                  className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+                >
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
+                    Recipes
+                  </span>
+                  <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
+                </Link>
 
-              <Link
-                href="/"
-                // href="/recipes"
-                className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
-              >
-                <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
-                  Recipes
-                </span>
-                <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
-              </Link>
+                <Link
+                  href="/blog"
+                  className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+                >
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
+                    Blog
+                  </span>
+                  <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
+                </Link>
 
-              <Link
-                href="/blog"
-                className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
-              >
-                <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
-                  Blog
-                </span>
-                <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
-              </Link>
+                <Link
+                  href="/contact"
+                  className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+                >
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
+                    Contact
+                  </span>
+                  <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
+                </Link>
 
-              <Link
-                href="/contact"
-                className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
-              >
-                <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
-                  Contact
-                </span>
-                <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
-              </Link>
-
-              <Link
-                href="/about"
-                className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
-              >
-                <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
-                  About us
-                </span>
-                <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
-              </Link>
-            </nav>
+                <Link
+                  href="/about"
+                  className="group inline-flex flex-col items-center px-4 py-2 rounded transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+                >
+                  <span className="text-sm text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-50">
+                    About us
+                  </span>
+                  <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
+                </Link>
+              </nav>
+            )}
           </div>
-
           <div className="flex items-center gap-4">
             <button
               type="button"
@@ -114,18 +126,45 @@ export default function Header() {
               <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
 
-            <Link
-              href="/sign-in"
-              className="hidden md:inline-block px-4 py-2 border rounded text-sm bg-transparent dark:text-zinc-100"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="hidden md:inline-block px-4 py-2 bg-zinc-900 text-white rounded text-sm dark:bg-white dark:text-black"
-            >
-              Sign Up
-            </Link>
+            {auth ? (
+              <>
+                <button
+                  onClick={onLogout}
+                  className="md:block hidden px-4 py-2 border rounded text-sm bg-transparent dark:text-zinc-100"
+                >
+                  Logout
+                </button>
+                <div className="flex items-center gap-2">
+                  <Image
+                    src={auth.avatar || '/default-avatar.png'}
+                    alt="User Avatar"
+                    width={32}
+                    height={32}
+                    className="rounded-full border border-black/10 dark:border-white/10"
+                  />
+                  <div className="flex flex-col items-start justify-center gap-2">
+                    <span className="ml-2 text-sm text-zinc-700 dark:text-zinc-300">{auth.username}</span>
+                    <span className="ml-2 text-sm text-zinc-700 dark:text-zinc-300">{auth.email}</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  onClick={onLogout}
+                  href="/sign-in"
+                  className="hidden md:inline-block px-4 py-2 border rounded text-sm bg-transparent dark:text-zinc-100"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/sign-up"
+                  className="hidden md:inline-block px-4 py-2 bg-zinc-900 text-white rounded text-sm dark:bg-white dark:text-black"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
 
             {/* mobile actions */}
             <Link

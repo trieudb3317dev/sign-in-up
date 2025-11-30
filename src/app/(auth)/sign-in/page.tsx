@@ -7,28 +7,65 @@ import { validateName, validatePassword, validatePhone } from '@/utils/validate'
 import { IoIosEye } from 'react-icons/io';
 import { IoIosEyeOff } from 'react-icons/io';
 import notify from '@/utils/notify';
+import usePublic from '@/hooks/useApiPublic';
+import { useAuth } from '@/hooks/useAuth';
+import AuthService from '@/services/authService';
+import { useRouter } from 'next/navigation';
+import AuthAdminService from '@/services/adminAuthService';
 
 export default function SignInPage() {
   const { tab } = useAuthContext();
+  const apiPublic = usePublic();
+  const router = useRouter();
+  const { setLoadding, accessToken, auth } = useAuth();
   const [username, setUsername] = React.useState('');
   const [mobile, setMobile] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [showPassword, setShowPassword] = React.useState(false);
   const [remember, setRemember] = React.useState(false);
+  const [isUser, setIsUser] = React.useState(false);
+  const [role, setRole] = React.useState<'admin' | null>(null);
 
   const usernameError = validateName(username);
   const phoneError = validatePhone(mobile);
   const passwordError = validatePassword(password);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const authService = AuthService;
+
+  React.useEffect(() => {
+    if (auth && auth.role !== undefined) {
+      setRole(auth.role === 'admin' ? 'admin' : null);
+    }
+  }, [auth]);
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (tab === 'username' && usernameError) return notify('error', usernameError);
     if (tab === 'mobile' && phoneError) return notify('error', phoneError);
     if (passwordError) return notify('error', passwordError);
     if (!remember) return notify('error', 'You must agree to remember me.');
-    // TODO: xử lý submit
-    notify('success', 'Sign in successful!');
-    console.log('submit', tab === 'username' ? { username, password } : { mobile, password });
+    setLoadding(true);
+    try {
+      const data = !isUser
+        ? await authService.login(apiPublic, {
+            username: tab === 'username' ? username : mobile,
+            password,
+          })
+        : await AuthAdminService.login(apiPublic, {
+            username: tab === 'username' ? username : mobile,
+            password,
+          });
+
+      router.push(isUser ? '/dashboard' : '/');
+      notify('success', 'Sign in successful!');
+      console.log('signin response', data);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Sign in failed';
+      notify('error', msg);
+      router.push('/sign-in'); // Redirect back to sign-in page
+    } finally {
+      setLoadding(false);
+    }
   };
 
   return (
@@ -98,6 +135,11 @@ export default function SignInPage() {
           Forgot password?
         </a>
       </div>
+
+      <label className="flex items-center gap-2 text-sm text-zinc-600">
+        <input type="checkbox" checked={isUser} onChange={(e) => setIsUser(e.target.checked)} className="w-4 h-4" />
+        Is admin right?
+      </label>
 
       <button
         type="submit"

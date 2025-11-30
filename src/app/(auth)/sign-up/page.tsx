@@ -11,8 +11,12 @@ import {
   validatePhone,
 } from '@/utils/validate';
 import notify from '@/utils/notify';
+import AuthService from '@/services/authService';
+import usePublic from '@/hooks/useApiPublic';
+import AuthAdminService from '@/services/adminAuthService';
 
 export default function SignUpPage() {
+  const apiPublic = usePublic();
   const [username, setUsername] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [phone, setPhone] = React.useState('');
@@ -21,13 +25,15 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = React.useState(false);
   const [remember, setRemember] = React.useState(false);
+  const [isUser, setIsUser] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const usernameError = validateName(username);
   const emailError = validateEmail(email);
   const phoneError = validatePhone(phone);
   const passwordError = validatePassword(password);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (usernameError) return notify('error', usernameError);
     if (emailError) return notify('error', emailError);
@@ -36,9 +42,20 @@ export default function SignUpPage() {
     if (validatePasswordConfirm(password, passwordConfirm))
       return notify('error', validatePasswordConfirm(password, passwordConfirm));
     if (!remember) return notify('error', 'You must agree to remember me.');
-    // TODO: xử lý đăng ký
-    notify('success', 'Sign up successful!');
-    console.log('signup', { username, email, phone, password, remember });
+
+    setLoading(true);
+    try {
+      const data = !isUser
+        ? await AuthService.register(apiPublic, { username, email, password })
+        : await AuthAdminService.register(apiPublic, { username, email, password });
+      notify('success', 'Sign up successful!');
+      console.log('signup response', data);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Sign up failed';
+      notify('error', msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,7 +70,6 @@ export default function SignUpPage() {
           className="w-full border border-zinc-200 dark:border-zinc-700 rounded px-3 py-2 bg-white dark:bg-transparent text-zinc-900 dark:text-zinc-100"
           placeholder="Username"
         />
-        {/* Add validation error message for username here */}
         {usernameError && <span className="text-xs text-red-500 mt-1">{usernameError}</span>}
       </label>
 
@@ -136,11 +152,17 @@ export default function SignUpPage() {
         Remember me
       </label>
 
+      <label className="flex items-center gap-2 text-sm text-zinc-600">
+        <input type="checkbox" checked={isUser} onChange={(e) => setIsUser(e.target.checked)} className="w-4 h-4" />
+        Is admin right?
+      </label>
+
       <button
         type="submit"
-        className="w-full mt-4 bg-gradient-to-r from-sky-400 to-blue-500 text-white py-3 rounded shadow-sm"
+        disabled={loading}
+        className="w-full mt-4 bg-gradient-to-r from-sky-400 to-blue-500 text-white py-3 rounded shadow-sm disabled:opacity-60"
       >
-        Continue
+        {loading ? 'Submitting...' : 'Continue'}
       </button>
     </form>
   );

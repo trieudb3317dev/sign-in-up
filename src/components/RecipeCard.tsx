@@ -5,11 +5,24 @@ import { AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
 
 type Recipe = {
   id: string | number;
-  image: string;
   title: string;
-  time_to_cook?: string;
-  main_ingredients?: string[];  
-  category?: string;
+  slug: string;
+  image_url: string;
+  category: {
+    id: number;
+    name: string;
+  };
+  admin: {
+    id: number;
+    username: string;
+    role: string;
+  };
+  detail: {
+    recipe_video: string;
+    time_preparation: string;
+    time_cooking: string;
+    recipe_type: string;
+  };
   liked?: boolean;
 };
 
@@ -28,7 +41,7 @@ export default function RecipeCard({ item, onLike }: { item: Recipe; onLike?: (i
       {/* clickable area: image + title -> link to recipe detail */}
       <Link href={`/recipes/${item.id}`} className="block">
         <div className="relative w-full h-44 md:h-48 lg:h-56">
-          <Image src={item.image} alt={item.title} fill className="object-cover" />
+          <Image src={item.image_url} alt={item.title} fill className="object-cover" />
           {/* like button stays clickable without navigating */}
           <button
             type="button"
@@ -55,13 +68,13 @@ export default function RecipeCard({ item, onLike }: { item: Recipe; onLike?: (i
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
                 </svg>
-                <span>{item.time_to_cook ?? '30 Minutes'}</span>
+                <span>{item?.detail?.time_cooking ?? '30 Minutes'}</span>
               </span>
               <span className="inline-flex items-center gap-2">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M3 6h18v12H3z" />
                 </svg>
-                <span>{item.main_ingredients?.join(', ') ?? 'Snack'}</span>
+                <span>{item?.detail?.recipe_type ?? 'Snack'}</span>
               </span>
             </div>
           </div>
