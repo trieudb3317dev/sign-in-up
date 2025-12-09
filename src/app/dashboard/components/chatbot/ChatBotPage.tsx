@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
 
 type TrainRequest = {
   source_url: string;
@@ -33,7 +34,7 @@ export default function ChatBotPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<TrainRequest>({
-    source_url: `${process.env.NEXT_PUBLIC_API_URL}${process.env.NEXT_PUBLIC_PREFIX_URL}/recipes/full-details`,
+    source_url: `${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/recipes/full-details`,
     index_path: 'out.index',
     meta_path: 'meta.json',
     model: 'sentence-transformers/all-MiniLM-L6-v2',
@@ -98,7 +99,7 @@ export default function ChatBotPage() {
       
       // Clear form after successful train
       setFormData({
-        source_url: `${process.env.NEXT_PUBLIC_API_URL}/${process.env.NEXT_PUBLIC_PREFIX_URL}/recipes/full-details`,
+        source_url: `${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/recipes/full-details`,
         index_path: 'out.index',
         meta_path: 'meta.json',
         model: 'sentence-transformers/all-MiniLM-L6-v2',
@@ -156,7 +157,7 @@ export default function ChatBotPage() {
               onChange={handleInputChange}
               required
               className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
-              placeholder={`${process.env.NEXT_PUBLIC_API_URL}/${process.env.NEXT_PUBLIC_PREFIX_URL}/recipes/full-details`}
+              placeholder={`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/recipes/full-details`}
             />
           </div>
 
