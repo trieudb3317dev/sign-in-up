@@ -1,12 +1,8 @@
 import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
-
-const apiSecure = axios.create({
-  baseURL: API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX,
-  withCredentials: true, // <-- ensure cookies are sent with requests
-});
+import { useEffect, useRef, useMemo } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 
 function getCookie(name: string) {
   if (typeof document === 'undefined') return '';
@@ -17,7 +13,22 @@ function getCookie(name: string) {
 
 export const useSecure = () => {
   const router = useRouter();
+  const { accessToken } = useAuth();
+  const accessTokenRef = useRef<string | null>(null);
   const initialized = useRef(false);
+
+  // Update ref whenever accessToken changes
+  useEffect(() => {
+    accessTokenRef.current = accessToken;
+  }, [accessToken]);
+
+  // Create axios instance with current baseURL
+  const apiSecure = useMemo(() => {
+    return axios.create({
+      baseURL: API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX,
+      withCredentials: true, // <-- ensure cookies are sent with requests
+    });
+  }, []);
 
   useEffect(() => {
     if (initialized.current) return;
@@ -27,13 +38,15 @@ export const useSecure = () => {
         // Make sure cookies are sent even if server auth uses httpOnly cookie
         config.withCredentials = true;
 
-        // Try to read token from cookie (if not httpOnly). If present, attach Authorization.
-        const token = getCookie('access-token') || getCookie('access_token') || '';
+        // Get the latest token from ref (always up-to-date)
+        // Priority 1: Use token from AuthContext (most reliable for cross-origin)
+        // Priority 2: Try to read token from cookie as fallback
+        const token = accessTokenRef.current || getCookie('access-token') || getCookie('access_token') || '';
+        
         if (token) {
           config.headers = config.headers ?? {};
           config.headers.authorization = `Bearer ${token}`;
-          // small debug to indicate header will be set (do not log token)
-          console.debug('[apiSecure] Authorization header will be attached');
+          console.debug('[apiSecure] Authorization header attached from', accessTokenRef.current ? 'context' : 'cookie');
         } else {
           // If token is not readable (likely httpOnly cookie), rely on cookies sent via withCredentials.
           console.debug('[apiSecure] No readable token found — relying on cookie-based auth via withCredentials');
@@ -65,7 +78,7 @@ export const useSecure = () => {
       apiSecure.interceptors.request.eject(reqId);
       apiSecure.interceptors.response.eject(resId);
     };
-  }, [router]);
+  }, [router, apiSecure]);
 
   return apiSecure;
 };

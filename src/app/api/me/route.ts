@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
-const BACKEND = process.env.BACKEND_URL ?? 'http://localhost:8080';
+const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
 export async function GET(request: Request) {
   try {

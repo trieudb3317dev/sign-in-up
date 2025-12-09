@@ -36,7 +36,7 @@ export default function ProfilePage({ initial }: Props) {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, { method: 'POST', body: fd });
+      const res = await fetch(`${API_URL_WITH_PREFIX || API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, { method: 'POST', body: fd });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       setAvatar(data.url || '');
@@ -44,7 +44,7 @@ export default function ProfilePage({ initial }: Props) {
       console.error('upload error', err);
       notify('error', 'Upload failed');
     } finally {
-      setUploading(false);
+      setUploading(false);  
     }
   }
 
