@@ -1,5 +1,4 @@
 import { AxiosInstance } from 'axios';
-import jwt from 'jsonwebtoken';
 
 type RegisterType = {
   username: string;
@@ -23,6 +22,23 @@ type AuthType = {
   created_at: string;
 };
 
+type ResetPasswordType = {
+  reset_token: string;
+  new_password: string;
+};
+
+type ForgotPasswordType = {
+  email: string;
+};
+
+type UpdateProfileType = {
+  full_name: string;
+  avatar: string;
+  gender: string;
+  day_of_birth: string;
+  phone_number: string;
+};
+
 export default class AuthService {
   /**
    * Register service
@@ -44,8 +60,8 @@ export default class AuthService {
   /**
    * Forgot password service
    */
-  static async forgotPassword(apiPublic: any, { email }: { email: string }): Promise<any> {
-    const response = await apiPublic.post('/auth/forgot-password', { email });
+  static async sendOtp(apiPublic: any, { email }: { email: string }): Promise<any> {
+    const response = await apiPublic.post('/auth/send-otp', { email });
     return response.data;
   }
 
@@ -53,10 +69,10 @@ export default class AuthService {
    * Reset password service
    */
   static async resetPassword(
-    apiPublic: AxiosInstance,
-    { reset_token, new_password }: { reset_token: string; new_password: string }
+    apiPublic: any,
+    { reset_token, new_password, otp }: { reset_token: string; new_password: string; otp: string }
   ): Promise<any> {
-    const response = await apiPublic.post('/auth/reset-password', { reset_token, new_password });
+    const response = await apiPublic.post('/auth/reset-password', { reset_token, new_password, otp });
     return response.data;
   }
 
@@ -75,6 +91,20 @@ export default class AuthService {
       },
     });
     console.log('Current User Response:', response.data);
+    return response.data;
+  }
+
+  static async updateProfile(
+    apiPrivate: any,
+    { full_name, avatar, gender, day_of_birth, phone_number }: UpdateProfileType
+  ): Promise<any> {
+    const response = await apiPrivate.put('/users', {
+      full_name,
+      avatar,
+      gender,
+      day_of_birth,
+      phone_number,
+    });
     return response.data;
   }
 }

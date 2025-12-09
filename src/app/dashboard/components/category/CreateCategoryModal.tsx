@@ -1,5 +1,5 @@
 'use client';
-import { API_URL_WITH_PREFIX } from '@/config/contant.config';
+import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
 import notify from '@/utils/notify';
 import React, { useEffect, useState } from 'react';
 
@@ -38,7 +38,7 @@ export default function CreateCategoryModal({ open, onClose, onCreate, onUpdate,
       const fd = new FormData();
       fd.append('file', file);
       // expects server endpoint /api/upload that returns { url: string }
-      const res = await fetch(`${API_URL_WITH_PREFIX}/cloudinary/upload`, { method: 'POST', body: fd });
+      const res = await fetch(`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, { method: 'POST', body: fd });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       setImageUrl(data.url || '');

@@ -6,73 +6,59 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
 import Contact from '@/components/Contact';
+import { useBlogs } from '@/hooks/useBlogs';
+import { useRecipes } from '@/hooks/useRecipes';
 
-const SAMPLE_POSTS = [
-  {
-    id: 1,
-    image: '/images/blog/1.jpg',
-    title: 'Crochet Projects for Noodle Lovers',
-    excerpt:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore',
-    author: 'Wade Warren',
-    date: '12 November 2021',
-  },
-  {
-    id: 2,
-    image: '/images/blog/2.jpg',
-    title: '10 Vegetarian Recipes To Eat This Month',
-    excerpt:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore',
-    author: 'Robert Fox',
-    date: '12 November 2021',
-  },
-  {
-    id: 3,
-    image: '/images/blog/3.jpg',
-    title: 'Full Guide to Becoming a Professional Chef',
-    excerpt:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore',
-    author: 'Dianne Russell',
-    date: '12 November 2021',
-  },
-  {
-    id: 4,
-    image: '/images/blog/4.jpg',
-    title: 'Simple & Delicious Vegetarian Lasagna',
-    excerpt:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore',
-    author: 'Leslie Alexander',
-    date: '12 November 2021',
-  },
-  {
-    id: 5,
-    image: '/images/blog/5.jpg',
-    title: 'Plantain and Pinto Stew with Aji Verde',
-    excerpt:
-      'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore',
-    author: 'Courtney Henry',
-    date: '12 November 2021',
-  },
-];
+type BlogPost = {
+  id: number;
+  title: string;
+  slug: string;
+  image_url: string;
+  created_at: string;
+  admin: {
+    id: number;
+    username: string;
+    avatar: string;
+  };
+};
 
-const TASTY = [
-  { id: 't1', title: 'Chicken Meatballs with Cream Cheese', image: '/images/blog/small1.jpg' },
-  { id: 't2', title: 'Traditional Bolognaise Ragu', image: '/images/blog/small2.jpg' },
-  { id: 't3', title: 'Pork and Chive Chinese Dumplings', image: '/images/blog/small3.jpg' },
-];
+type Recipe = {
+  id: string | number;
+  title: string;
+  slug: string;
+  image_url: string;
+  category: {
+    id: number;
+    name: string;
+  };
+  admin: {
+    id: number;
+    username: string;
+    role: string;
+  };
+  detail: {
+    recipe_video: string;
+    time_preparation: string;
+    time_cooking: string;
+    recipe_type: string;
+  };
+  liked?: boolean;
+};
 
 export default function BlogPage() {
+  const { blogs } = useBlogs();
+  const { recipes } = useRecipes();
   const [query, setQuery] = React.useState('');
-  const [posts, setPosts] = React.useState(SAMPLE_POSTS);
+  const [posts, setPosts] = React.useState<BlogPost[]>(blogs || []);
   const [page, setPage] = React.useState(1);
   const pageSize = 3;
 
   const totalPages = Math.max(1, Math.ceil(posts.length / pageSize));
   const pagedItems = posts.slice((page - 1) * pageSize, page * pageSize) ?? posts;
 
-  // React.useEffect(() => {
-  //     setPosts(pagedItems);
-  // }, [pagedItems])
+  React.useEffect(() => {
+    setPosts(blogs);
+  }, [blogs]);
 
   const goPrev = () => setPage((p) => Math.max(1, p - 1));
   const goNext = () => setPage((p) => Math.min(totalPages, p + 1));
@@ -84,7 +70,7 @@ export default function BlogPage() {
       setPosts(pagedItems);
       return;
     }
-    setPosts(pagedItems.filter((p) => p.title.toLowerCase().includes(q) || p.excerpt.toLowerCase().includes(q)));
+    setPosts(pagedItems.filter((p) => p.title.toLowerCase().includes(q)));
   };
 
   return (
@@ -125,10 +111,10 @@ export default function BlogPage() {
             <div>
               <h4 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Tasty Recipes</h4>
               <div className="space-y-4">
-                {TASTY.map((t) => (
+                {recipes.map((t: Recipe) => (
                   <Link key={t.id} href="#" className="flex items-center gap-3">
                     <div className="w-20 h-14 rounded-md overflow-hidden relative">
-                      <Image src={t.image} alt={t.title} fill className="object-cover" />
+                      <Image src={t.image_url} alt={t.title} fill className="object-cover" />
                     </div>
                     <div className="text-sm">
                       <div className="font-medium text-zinc-900 dark:text-zinc-100">{t.title}</div>

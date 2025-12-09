@@ -23,6 +23,23 @@ type AuthType = {
   created_at: string;
 };
 
+type ResetPasswordType = {
+  reset_token: string;
+  new_password: string;
+};
+
+type ForgotPasswordType = {
+  email: string;
+};
+
+type UpdateProfileType = {
+  full_name: string;
+  avatar: string;
+  gender: 'male' | 'female' | 'other';
+  day_of_birth: string;
+  phone_number: string;
+};
+
 export default class AuthAdminService {
   /**
    * Register service
@@ -44,8 +61,8 @@ export default class AuthAdminService {
   /**
    * Forgot password service
    */
-  static async forgotPassword(apiPublic: any, { email }: { email: string }): Promise<any> {
-    const response = await apiPublic.post('/admin/forgot-password', { email });
+  static async sendOtp(apiPublic: any, { email }: { email: string }): Promise<any> {
+    const response = await apiPublic.post('/admin/send-otp', { email });
     return response.data;
   }
 
@@ -53,10 +70,10 @@ export default class AuthAdminService {
    * Reset password service
    */
   static async resetPassword(
-    apiPublic: AxiosInstance,
-    { reset_token, new_password }: { reset_token: string; new_password: string }
+    apiPublic: any,
+    { reset_token, new_password, otp }: { reset_token: string; new_password: string; otp: string }
   ): Promise<any> {
-    const response = await apiPublic.post('/admin/reset-password', { reset_token, new_password });
+    const response = await apiPublic.post('/admin/reset-password', { reset_token, new_password, otp });
     return response.data;
   }
 
@@ -71,6 +88,20 @@ export default class AuthAdminService {
   static async getCurrentUser(apiPublic: any, accessToken: string): Promise<AuthType> {
     const response = await apiPublic.get(`/admin/me`);
     console.log('Current User Response:', response.data);
+    return response.data;
+  }
+
+  static async updateProfile(
+    apiPrivate: any,
+    { full_name, avatar, gender, day_of_birth, phone_number }: UpdateProfileType
+  ): Promise<any> {
+    const response = await apiPrivate.put('/admin/me', {
+      full_name,
+      avatar,
+      gender,
+      day_of_birth,
+      phone_number,
+    });
     return response.data;
   }
 }

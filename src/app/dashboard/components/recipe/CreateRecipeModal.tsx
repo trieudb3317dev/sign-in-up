@@ -5,7 +5,7 @@ import RecipeService from '@/services/recipeService';
 import usePublic from '@/hooks/useApiPublic';
 import notify from '@/utils/notify';
 import CategoryService from '@/services/categoryService';
-import { API_URL_WITH_PREFIX } from '@/config/contant.config';
+import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
 
 type Props = {
   open: boolean;
@@ -31,7 +31,7 @@ export default function CreateRecipeModal({ open, onClose, onCreate, onUpdate, i
   const [timePreparation, setTimePreparation] = useState('');
   const [timeCooking, setTimeCooking] = useState('');
   const [recipeType, setRecipeType] = useState('');
-  const [ingredients, setIngredients] = useState<any[]>([{ main: '' }]);
+  const [ingredients, setIngredients] = useState<any[]>([{ main: '', sauce: '' }]);
   const [instructions, setInstructions] = useState<any[]>([{ step: '', image: '' }]);
   const [nutritionInfo, setNutritionInfo] = useState<string[]>(['']);
   const [notes, setNotes] = useState('');
@@ -133,7 +133,7 @@ export default function CreateRecipeModal({ open, onClose, onCreate, onUpdate, i
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`${API_URL_WITH_PREFIX}/cloudinary/upload`, { method: 'POST', body: fd });
+      const res = await fetch(`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, { method: 'POST', body: fd });
       if (!res.ok) throw new Error('upload fail');
       const data = await res.json();
       setImageUrl(data.url || '');
@@ -166,6 +166,17 @@ export default function CreateRecipeModal({ open, onClose, onCreate, onUpdate, i
 
   async function submitFinal(e?: React.FormEvent) {
     e?.preventDefault();
+
+    // normalize ingredients: combine all 'main' into one string, pick any 'sauce' if provided
+    const mainParts = ingredients.map((it) => (it?.main ?? '').trim()).filter(Boolean);
+    const joinedMain = mainParts.join(', ');
+    const sauceItem = ingredients.find((it) => (it?.sauce ?? '').trim());
+    const normalizedIngredients = joinedMain
+      ? sauceItem
+        ? [{ main: joinedMain, sauce: (sauceItem?.sauce ?? '').trim() }]
+        : [{ main: joinedMain }]
+      : [];
+
     const payload = {
       title,
       image_url: imageUrl,
@@ -176,7 +187,8 @@ export default function CreateRecipeModal({ open, onClose, onCreate, onUpdate, i
         time_preparation: timePreparation,
         time_cooking: timeCooking,
         recipe_type: recipeType,
-        ingredients,
+        // send normalized ingredients array with single object
+        ingredients: normalizedIngredients,
         instructions,
         nutrition_info: nutritionInfo,
         nutrition_facts: nutritionFacts,
@@ -321,6 +333,14 @@ export default function CreateRecipeModal({ open, onClose, onCreate, onUpdate, i
                     value={ing.main ?? ''}
                     onChange={(e) =>
                       setIngredients((s) => s.map((it, idx) => (idx === i ? { ...it, main: e.target.value } : it)))
+                    }
+                    className="flex-1 px-2 py-1 border rounded"
+                  />
+                  <input
+                    placeholder="sauce (optional)"
+                    value={ing.sauce ?? ''}
+                    onChange={(e) =>
+                      setIngredients((s) => s.map((it, idx) => (idx === i ? { ...it, sauce: e.target.value } : it)))
                     }
                     className="flex-1 px-2 py-1 border rounded"
                   />

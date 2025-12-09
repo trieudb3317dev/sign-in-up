@@ -1,7 +1,7 @@
 import RecipeDetail from '@/components/RecipeDetail';
 import { notFound } from 'next/navigation';
 import axios from 'axios';
-import { API_URL_WITH_PREFIX } from '@/config/contant.config';
+import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
 
 type Recipe = {
   id: string | number;
@@ -31,7 +31,7 @@ export default async function Page({ params }: { params: { id: string } | Promis
   // ensure params is resolved (works whether params is an object or a Promise
 
   const RECIPES: any[] = await (async () => {
-    const response = await axios.get(`${API_URL_WITH_PREFIX}/recipes`);
+    const response = await axios.get(`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/recipes`);
     return response.data.data;
   })();
 

@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import usePublic from './useApiPublic';
+import axios from 'axios';
+import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
 
 export function useRecipes() {
-  const apiPublic = usePublic();
   const {
     data: recipes = [],
     error,
@@ -11,7 +11,7 @@ export function useRecipes() {
   } = useQuery({
     queryKey: ['recipes'],
     queryFn: async () => {
-      const response = await apiPublic.get('/recipes');
+      const response = await axios.get(`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/recipes`);
       return response.data.data;
     },
   });

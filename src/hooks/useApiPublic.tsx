@@ -1,9 +1,9 @@
-import { API_URL_WITH_PREFIX } from '@/config/contant.config';
+import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
 import axios from 'axios';
 import { useMemo } from 'react';
 
 const apiPublic = axios.create({
-  baseURL: API_URL_WITH_PREFIX,
+  baseURL: API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX,
   headers: {
     'Content-Type': 'application/json',
   },

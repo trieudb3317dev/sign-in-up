@@ -2,6 +2,9 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AiOutlineHeart, AiFillHeart } from 'react-icons/ai';
+import WhistlistService from '@/services/whistlistService';
+import { useSecure } from '@/hooks/useApiSecure';
+import notify from '@/utils/notify';
 
 type Recipe = {
   id: string | number;
@@ -28,12 +31,30 @@ type Recipe = {
 
 export default function RecipeCard({ item, onLike }: { item: Recipe; onLike?: (id: string | number) => void }) {
   const [liked, setLiked] = React.useState<boolean>(!!item.liked);
+  const apiSecure = useSecure();
 
-  const toggleLike = (e?: React.MouseEvent) => {
+  React.useEffect(() => {
+    const checkIfLiked = async () => {
+      const res = await WhistlistService.isInWhistlist(apiSecure, Number(item.id));
+      console.log('isInWhistlist', item.id, res);
+      if (res && typeof res === 'boolean') {
+        setLiked(res);
+      }
+    };
+    checkIfLiked();
+  }, [apiSecure, item.id]);
+
+  const toggleLike = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
     e?.preventDefault();
     setLiked((s) => !s);
     if (onLike) onLike(item.id);
+    const res = await WhistlistService.addToWhistlist(apiSecure, Number(item.id));
+    if (!res || (res && res.error)) {
+      // revert like state on error
+      notify('error', 'Failed to update whistlist');
+    }
+    notify('success', liked ? 'Removed from whistlist' : 'Added to whistlist');
   };
 
   return (

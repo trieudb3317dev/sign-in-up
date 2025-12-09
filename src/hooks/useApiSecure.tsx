@@ -1,10 +1,10 @@
-import { API_URL_WITH_PREFIX } from '@/config/contant.config';
+import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
 const apiSecure = axios.create({
-  baseURL: API_URL_WITH_PREFIX,
+  baseURL: API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX,
   withCredentials: true, // <-- ensure cookies are sent with requests
 });
 

@@ -134,19 +134,21 @@ export default function Header() {
                 >
                   Logout
                 </button>
-                <div className="flex items-center gap-2">
-                  <Image
-                    src={auth.avatar || '/default-avatar.png'}
-                    alt="User Avatar"
-                    width={32}
-                    height={32}
-                    className="rounded-full border border-black/10 dark:border-white/10"
-                  />
-                  <div className="flex flex-col items-start justify-center gap-2">
-                    <span className="ml-2 text-sm text-zinc-700 dark:text-zinc-300">{auth.username}</span>
-                    <span className="ml-2 text-sm text-zinc-700 dark:text-zinc-300">{auth.email}</span>
+                <Link href="/dashboard" className="hidden md:inline-block">
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={auth.avatar || '/default-avatar.png'}
+                      alt="User Avatar"
+                      width={32}
+                      height={32}
+                      className="rounded-full border border-black/10 dark:border-white/10"
+                    />
+                    <div className="flex flex-col items-start justify-center gap-2">
+                      <span className="ml-2 text-sm text-zinc-700 dark:text-zinc-300">{auth.username}</span>
+                      <span className="ml-2 text-sm text-zinc-700 dark:text-zinc-300">{auth.email}</span>
+                    </div>
                   </div>
-                </div>
+                </Link>
               </>
             ) : (
               <>

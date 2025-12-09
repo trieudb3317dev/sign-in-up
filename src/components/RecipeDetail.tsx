@@ -315,7 +315,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
                     href={`/recipes/${o.id}`}
                     className="flex items-center gap-3 bg-white dark:bg-[#071018] p-3 rounded-lg shadow-sm hover:shadow-md"
                   >
-                    <div className="w-16 h-12 relative rounded overflow-hidden flex-shrink-0">
+                    <div className="w-16 h-12 relative rounded overflow-hidden flex-shrink-0 ">
                       {o.image_url ? (
                         <Image src={o.image_url} alt={o.title} fill className="object-cover" />
                       ) : (
@@ -328,7 +328,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
                     </div>
                   </Link>
                 ))}
-              </div>
+              </div>     
 
               <div className="mt-6 hidden md:block">
                 <div className="rounded-lg overflow-hidden">

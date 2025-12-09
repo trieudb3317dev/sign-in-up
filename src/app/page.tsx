@@ -9,6 +9,7 @@ import BlogSection from '@/components/BlogSection';
 import Contact from '@/components/Contact';
 import { useAuth } from '@/hooks/useAuth';
 import { LoadingProvider } from '@/context/LoadingProvider';
+import Chatbot from '@/components/Chatbot';
 
 export default function Home() {
   const { auth } = useAuth();
@@ -23,6 +24,7 @@ export default function Home() {
         <BlogSection />
         <RecipesSection />
         <Contact />
+        <Chatbot />
       </div>
     </LoadingProvider>
   );
