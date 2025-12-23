@@ -45,24 +45,84 @@ export default function SignInPage() {
     if (passwordError) return notify('error', passwordError);
     if (!remember) return notify('error', 'You must agree to remember me.');
     setLoadding(true);
+
+    // helper: clear client cookies for common names (dev fallback)
+    const clearClientCookies = () => {
+      if (typeof document === 'undefined') return;
+      const names = ['access_token', 'refresh_token', 'accessToken', 'refreshToken', 'token', 'jwt', 'authToken'];
+      for (const n of names) {
+        try {
+          document.cookie = `${n}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+        } catch {}
+      }
+      console.log('[signin] cleared client-side cookies (attempt)');
+    };
+
     try {
+      // clear possible old tokens before new login
+      clearClientCookies();
+
+      // 1) perform login using existing service (unchanged)
       const data = !isUser
-        ? await authService.login(apiPublic, {
-            username: tab === 'username' ? username : mobile,
-            password,
-          })
-        : await AuthAdminService.login(apiPublic, {
-            username: tab === 'username' ? username : mobile,
-            password,
-          });
+        ? await authService.login(apiPublic, { username: tab === 'username' ? username : mobile, password })
+        : await AuthAdminService.login(apiPublic, { username: tab === 'username' ? username : mobile, password });
+
+      // 2) try same-origin proxy to forward backend Set-Cookie (optional; only if proxy exists)
+      try {
+        const body = { username: tab === 'username' ? username : mobile, password, isAdmin: isUser };
+        console.log('[api/login] POST called, body:', body);
+        const proxyRes = await fetch('/api/login', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }).catch(() => null);
+        if (proxyRes) console.log('[signin] /api/login proxy status', proxyRes.status);
+      } catch (err) {
+        console.warn('[signin] /api/login proxy call failed', err);
+      }
+
+      // 3) poll /api/me a few times to allow cookie to be set & server to return user
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      let meJson: any = null;
+      for (let i = 0; i < 6; i++) {
+        try {
+          console.log(
+            `[signin][poll] attempt ${i + 1}, document.cookie:`,
+            typeof document !== 'undefined' ? document.cookie : '<no-doc>'
+          );
+          const meRes = await fetch('/api/me', { method: 'GET', credentials: 'include' });
+          const text = await meRes.text().catch(() => '');
+          try {
+            meJson = text ? JSON.parse(text) : null;
+          } catch {
+            meJson = null;
+          }
+          console.log('[signin][poll] /api/me status', meRes.status, meJson);
+          if (meRes.ok && meJson?.user) {
+            // ContextProvider will pick this up on mount/next render; break when user found
+            break;
+          }
+        } catch (err) {
+          console.warn('[signin][poll] /api/me error', err);
+        }
+        await sleep(250 * (i + 1));
+      }
+
+      // if meJson.user not found, still proceed but warn
+      if (!meJson?.user) {
+        console.warn(
+          '[signin] did not obtain /api/me user after polling — token may not have been set or cookie attributes blocked storage'
+        );
+      }
 
       router.push(isUser ? '/dashboard' : '/');
       notify('success', 'Sign in successful!');
-      console.log('signin response', data);
+      console.log('signin response', data, 'me after login:', meJson);
     } catch (error: any) {
       const msg = error?.response?.data?.message || error?.message || 'Sign in failed';
       notify('error', msg);
-      router.push('/sign-in'); // Redirect back to sign-in page
+      router.push('/sign-in');
     } finally {
       setLoadding(false);
     }

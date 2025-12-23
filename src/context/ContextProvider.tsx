@@ -131,15 +131,44 @@ export default function ContextProvider({ children }: { children: React.ReactNod
     console.log('[context] scheduled refresh in (s):', deltaSec);
   };
 
+  // helper: try multiple common cookie names using both getCookieClient and document.cookie
+  const readPossibleCookies = () => {
+    const names = ['access_token', 'refresh_token'];
+    const found: Record<string, string> = {};
+    for (const n of names) {
+      try {
+        const c1 = getCookieClient(n);
+        if (c1) found[n] = c1;
+      } catch {}
+    }
+    // also try document.cookie parsing (won't find HttpOnly cookies)
+    try {
+      const doc = typeof document !== 'undefined' ? document.cookie : '';
+      if (doc) {
+        const pairs = doc.split(';').map((p) => p.trim());
+        for (const p of pairs) {
+          const [k, ...rest] = p.split('=');
+          const val = rest.join('=');
+          if (names.includes(k) && val) found[k] = decodeURIComponent(val);
+        }
+      }
+    } catch {}
+    return { found, docCookie: typeof document !== 'undefined' ? document.cookie : '<no-document>' };
+  };
+
   React.useEffect(() => {
     const initializeAuth = async () => {
       setLoadding(true);
       try {
-        // fallback: try server-side /api/me which reads cookies server-side (if cookies HttpOnly)
+        // Diagnostic: inspect available client cookies before contacting server
+         const before = readPossibleCookies();
+
+        // Try server-side /api/me using fetch with credentials so HTTP-only cookies are sent
         try {
-          const res = await axios.get('/api/me', { withCredentials: true });
-          if (res) {
-            const json = res.data;
+          const res = await fetch('/api/me', { method: 'GET', credentials: 'include', cache: 'no-store' });
+
+          if (res.ok) {
+            const json = await res.json();
             const serverUser = json?.user ?? null;
             const serverAccess = json?.accessToken ?? null;
             const serverRefresh = json?.refreshToken ?? null;
@@ -149,22 +178,74 @@ export default function ContextProvider({ children }: { children: React.ReactNod
             // schedule refresh using returned token or cookie
             scheduleRefreshFromAccess(serverAccess ?? getCookieClient('access_token'));
           } else {
-            // nothing valid
-            setAuth(null);
-            setAccessToken(null);
-            setRefreshToken(null);
+            // log status and body for debugging
+            let bodyText = '<no body>';
+            try { bodyText = await res.text(); } catch {}
+
+            // After server call, inspect cookies again to detect whether server set cookies but HttpOnly
+            const after = readPossibleCookies();
+            console.log('[context] cookies after /api/me', after);
+
+            // If we can read cookie by name, use it; otherwise most likely cookie is HttpOnly or not set due to domain/CORS
+            const cAccess = after.found['access_token'] || after.found['accessToken'] || after.found['token'] || null;
+            if (cAccess) {
+              setAccessToken(cAccess);
+              const decoded: any = decodeToken(cAccess);
+              if (decoded) {
+                const maybeUser: any = decoded?.user ?? decoded;
+                if (maybeUser && maybeUser.id) setAuth(maybeUser);
+              }
+              scheduleRefreshFromAccess(cAccess);
+            } else {
+              // If cookie not readable, advise possible causes
+              console.warn(
+                '[context] No readable access token found after /api/me. Possible causes: cookie is HttpOnly (expected), or server set cookie with different domain/Secure/SameSite or CORS blocked. ' +
+                  'Check Network -> login request -> Response Headers -> Set-Cookie, and ensure login request used credentials: include and server sent Access-Control-Allow-Credentials: true and correct Access-Control-Allow-Origin.'
+              );
+              setAuth(null);
+              setAccessToken(null);
+              setRefreshToken(null);
+            }
           }
         } catch (err) {
-          console.warn('[context] /api/me failed', err);
-          setAuth(null);
-          setAccessToken(null);
-          setRefreshToken(null);
+          // fetch failed - log and fallback to axios/getCookie
+          console.warn('[context] fetch /api/me failed', err);
+          try {
+            const res2 = await axios.get('/api/me', { withCredentials: true });
+            const json2 = res2?.data;
+            const serverUser = json2?.user ?? null;
+            const serverAccess = json2?.accessToken ?? null;
+            const serverRefresh = json2?.refreshToken ?? null;
+            if (serverUser) setAuth(serverUser);
+            if (serverAccess) setAccessToken(serverAccess);
+            if (serverRefresh) setRefreshToken(serverRefresh);
+            scheduleRefreshFromAccess(serverAccess ?? getCookieClient('access_token'));
+          } catch (err2) {
+            console.warn('[context] axios /api/me also failed', err2);
+            // final fallback: read cookies directly (may be absent if HttpOnly)
+            const final = readPossibleCookies();
+            console.log('[context] fallback read cookies, document.cookie:', final.docCookie, 'found:', final.found);
+            const cAccess = final.found['access_token'] || final.found['accessToken'] || final.found['token'] || null;
+            if (cAccess) {
+              setAccessToken(cAccess);
+              const decoded: any = decodeToken(cAccess);
+              if (decoded) {
+                const maybeUser: any = decoded?.user ?? decoded;
+                if (maybeUser && maybeUser.id) setAuth(maybeUser);
+              }
+              scheduleRefreshFromAccess(cAccess);
+            } else {
+              setAuth(null);
+              setAccessToken(null);
+              setRefreshToken(null);
+            }
+          }
         }
-      } catch (error) {
+      } catch (error: any) {
         setAuth(null);
         setAccessToken(null);
         setRefreshToken(null);
-        router.push('/sign-in'); // Redirect to sign-in page on error
+        // router.push('/sign-in'); // Redirect to sign-in page on error
       } finally {
         setLoadding(false);
       }

@@ -6,13 +6,33 @@ const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 export async function GET(request: Request) {
   try {
     console.log('[api/me] GET called, headers:', Object.fromEntries(request.headers));
+    // Additional debug: raw cookie header from incoming request
+    const rawCookieHeader = request.headers.get('cookie') ?? null;
+    // server-side cookies() reading
     const c = await cookies();
+    // gather all cookies visible to next/headers
+    const serverCookiesArray = c.getAll?.() ?? [];
+    const serverCookies: Record<string, string> = {};
+    for (const ck of serverCookiesArray) {
+      try {
+        serverCookies[ck.name] = ck.value;
+      } catch {}
+    }
+
     const accessToken = c.get('access_token')?.value ?? null;
     const refreshToken = c.get('refresh_token')?.value ?? null;
 
     if (!accessToken && !refreshToken) {
-      console.log('[api/me] no token in cookies');
-      return NextResponse.json({ user: null, accessToken: null, refreshToken: null }, { status: 200 });
+      console.log('[api/me] no token in cookies, rawCookieHeader:', rawCookieHeader, 'serverCookies:', serverCookies);
+      return NextResponse.json(
+        {
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          debug: { requestCookieHeader: rawCookieHeader, serverCookies, note: 'no access/refresh token found' },
+        },
+        { status: 200 }
+      );
     }
 
     // decode JWT payload without verification to read role
@@ -29,12 +49,10 @@ export async function GET(request: Request) {
       }
     };
 
-    // prefer access token payload, fallback to refresh token
     const payload = decodePayload(accessToken) ?? decodePayload(refreshToken);
     const role = payload?.role ?? null;
     console.log('[api/me] decoded payload role:', role);
 
-    // build candidate paths: first a role-based path, then fallbacks
     const roleBase = role !== null ? 'admin' : 'users';
     const candidates = [`/api/v1/${roleBase}/me`];
 
@@ -83,7 +101,12 @@ export async function GET(request: Request) {
           }
           console.log('[api/me] backend ok, path=', p);
           return NextResponse.json(
-            { user, accessToken, refreshToken, debug: { tried: results, used: p } },
+            {
+              user,
+              accessToken,
+              refreshToken,
+              debug: { tried: results, used: p, requestCookieHeader: rawCookieHeader, serverCookies },
+            },
             { status: 200 }
           );
         }
@@ -93,10 +116,14 @@ export async function GET(request: Request) {
       }
     }
 
-    // None succeeded — return debug info so client can show it
     console.warn('[api/me] no backend path matched. tried:', results);
     return NextResponse.json(
-      { user: null, accessToken: null, refreshToken: null, debug: { tried: results } },
+      {
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+        debug: { tried: results, requestCookieHeader: rawCookieHeader, serverCookies },
+      },
       { status: 502 }
     );
   } catch (err) {

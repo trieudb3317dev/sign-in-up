@@ -59,7 +59,7 @@ export default function Header() {
             <Link href="/" className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">
               Recipes Chef
             </Link>
-            {auth && auth.role === undefined && (
+            {!auth || auth.role !== 'admin' ? (
               <nav className="hidden md:flex items-center gap-2">
                 <Link
                   href="/"
@@ -112,7 +112,7 @@ export default function Header() {
                   <span className="mt-1 h-[2px] w-full bg-zinc-900 dark:bg-zinc-50 transform scale-x-0 origin-left transition-transform group-hover:scale-x-100" />
                 </Link>
               </nav>
-            )}
+            ) : null}
           </div>
           <div className="flex items-center gap-4">
             <button

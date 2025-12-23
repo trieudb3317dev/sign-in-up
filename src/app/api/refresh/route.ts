@@ -1,51 +1,105 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 
 const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
-export async function POST() {
+function parseSetCookie(sc: string) {
+  const parts = sc.split(';').map(p => p.trim());
+  const [nameValue, ...attrParts] = parts;
+  const eq = nameValue.indexOf('=');
+  const name = nameValue.slice(0, eq);
+  const value = nameValue.slice(eq + 1);
+  const attrs: Record<string, string | boolean> = {};
+  for (const a of attrParts) {
+    const [k, ...rest] = a.split('=');
+    const key = k.trim().toLowerCase();
+    const val = rest.length ? rest.join('=').trim() : true;
+    attrs[key] = val;
+  }
+  return { name, value, attrs };
+}
+
+function extractSetCookieArray(res: any): string[] {
   try {
-    const c = await cookies();
-    const refreshToken = c.get('refresh_token')?.value ?? null;
+    const raw = res?.headers?.raw?.();
+    if (raw && Array.isArray(raw['set-cookie'])) return raw['set-cookie'];
+  } catch {}
+  try {
+    const single = res?.headers?.get && res.headers.get('set-cookie');
+    if (!single) return [];
+    const tokens = single.split(/,(?=[^;]*=)/).map((s: any) => s.trim());
+    return tokens;
+  } catch {}
+  return [];
+}
 
-    if (!refreshToken) {
-      return NextResponse.json({ message: 'no refresh token' }, { status: 401 });
-    }
+export async function POST(request: Request) {
+  try {
+    const bodyText = await request.text().catch(() => '');
+    const target = `${BACKEND.replace(/\/$/, '')}/api/auth/refresh`;
 
-    // call backend refresh endpoint server-to-server and forward cookie header
-    const url = `${BACKEND.replace(/\/$/, '')}/api/v1/auth/refresh`;
-    const res = await fetch(url, {
+    const backendRes = await fetch(target, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        // forward refresh token as cookie header if backend expects cookie
-        'Cookie': `refresh_token=${refreshToken}`,
+        'Content-Type': request.headers.get('content-type') ?? 'application/json',
+        ...(request.headers.get('cookie') ? { cookie: request.headers.get('cookie')! } : {}),
       },
-      // if backend expects JSON body, send none or { } depending on backend
-      body: JSON.stringify({}),
+      body: bodyText || undefined,
     });
 
-    const text = await res.text().catch(() => null);
-    // if backend set new cookies, forward Set-Cookie header to client
-    const setCookieHeader = res.headers.get('set-cookie');
-    const headers: Record<string, string> = {};
-    if (setCookieHeader) headers['set-cookie'] = setCookieHeader;
+    const text = await backendRes.text().catch(() => '');
 
-    if (!res.ok) {
-      return new NextResponse(text ?? null, { status: res.status, headers });
-    }
+    const setCookies = extractSetCookieArray(backendRes);
 
-    // try parse json
-    let json = null;
+    const resBody = (() => {
+      try {
+        return text ? JSON.parse(text) : {};
+      } catch {
+        return { text };
+      }
+    })();
+
+    const res = NextResponse.json(resBody, { status: backendRes.status });
+
+    // determine if incoming request was https
+    let originIsHttps = false;
     try {
-      json = text ? JSON.parse(text) : null;
-    } catch {
-      json = text;
+      const proto = new URL(request.url).protocol;
+      originIsHttps = proto === 'https:';
+    } catch {}
+
+    for (const sc of setCookies) {
+      try {
+        const parsed = parseSetCookie(sc);
+        const opts: any = {};
+        opts.path = parsed.attrs.path ? String(parsed.attrs.path) : '/';
+        if (parsed.attrs['max-age']) {
+          const n = Number(parsed.attrs['max-age']);
+          if (!isNaN(n)) opts.maxAge = n;
+        } else if (parsed.attrs.expires) {
+          const dt = new Date(String(parsed.attrs.expires));
+          if (!isNaN(dt.getTime())) opts.expires = dt;
+        }
+        const backendSecure = !!parsed.attrs.secure;
+        opts.secure = !!(backendSecure && originIsHttps);
+        if (parsed.attrs.samesite) {
+          const s = String(parsed.attrs.samesite).toLowerCase();
+          if (s === 'none') {
+            opts.sameSite = opts.secure ? 'none' : 'lax';
+          } else if (s === 'strict') opts.sameSite = 'strict';
+          else opts.sameSite = 'lax';
+        } else {
+          opts.sameSite = 'lax';
+        }
+        opts.httpOnly = !!parsed.attrs.httponly;
+        res.cookies.set(parsed.name, parsed.value, opts);
+      } catch (e) {
+        console.warn('[api/refresh] failed to set parsed cookie', e);
+      }
     }
-    // return backend body to client (and forwarded cookies)
-    return NextResponse.json(json ?? { message: 'ok' }, { status: 200, headers });
-  } catch (err) {
-    console.error('[api/refresh] error', err);
-    return NextResponse.json({ message: 'internal error' }, { status: 500 });
+
+    return res;
+  } catch (err: any) {
+    console.error('[api/refresh] proxy error', err);
+    return NextResponse.json({ ok: false, error: String(err?.message || err) }, { status: 500 });
   }
 }

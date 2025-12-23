@@ -1,0 +1,122 @@
+import { NextResponse } from 'next/server';
+
+const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
+// parse one Set-Cookie header value into { name, value, attrs }
+function parseSetCookie(sc: string) {
+	const parts = sc.split(';').map(p => p.trim());
+	const [nameValue, ...attrParts] = parts;
+	const eq = nameValue.indexOf('=');
+	const name = nameValue.slice(0, eq);
+	const value = nameValue.slice(eq + 1);
+	const attrs: Record<string, string | boolean> = {};
+	for (const a of attrParts) {
+		const [k, ...rest] = a.split('=');
+		const key = k.trim().toLowerCase();
+		const val = rest.length ? rest.join('=').trim() : true;
+		attrs[key] = val;
+	}
+	return { name, value, attrs };
+}
+
+// extract multiple Set-Cookie entries (handles single header with commas in Expires)
+function extractSetCookieArray(res: any): string[] {
+	try {
+		const raw = res?.headers?.raw?.();
+		if (raw && Array.isArray(raw['set-cookie'])) return raw['set-cookie'];
+	} catch {}
+	try {
+		const single = res?.headers?.get && res.headers.get('set-cookie');
+		if (!single) return [];
+		const tokens = single.split(/,(?=[^;]*=)/).map((s: any) => s.trim());
+		return tokens;
+	} catch {}
+	return [];
+}
+
+export async function POST(request: Request) {
+	try {
+		const body = await request.json().catch(() => ({} as any));
+		console.log('[api/login] POST called, body:', body);
+		const isAdmin = !!body?.isAdmin;
+		const target = isAdmin
+			? `${BACKEND.replace(/\/$/, '')}/api/v1/admin/login`
+			: `${BACKEND.replace(/\/$/, '')}/api/v1/auth/login`;
+
+		const backendRes = await fetch(target, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(body),
+		});
+
+		const text = await backendRes.text().catch(() => '');
+
+		const setCookies = extractSetCookieArray(backendRes);
+
+		// prepare response JSON (try parse backend body)
+		const parsedBody = (() => {
+			try {
+				return text ? JSON.parse(text) : {};
+			} catch {
+				return { text };
+			}
+		})();
+
+		const res = NextResponse.json(parsedBody, { status: backendRes.status });
+
+		// Determine if incoming request was https (so we can keep secure flag)
+		let originIsHttps = false;
+		try {
+			const proto = new URL(request.url).protocol;
+			originIsHttps = proto === 'https:';
+		} catch {}
+
+		for (const sc of setCookies) {
+			try {
+				const parsed = parseSetCookie(sc);
+				const opts: any = {};
+
+				// sanitize: do NOT forward domain from backend (avoid mismatch)
+				// set path default '/'
+				opts.path = parsed.attrs.path ? String(parsed.attrs.path) : '/';
+
+				// if backend provided max-age or expires, forward them
+				if (parsed.attrs['max-age']) {
+					const n = Number(parsed.attrs['max-age']);
+					if (!isNaN(n)) opts.maxAge = n;
+				} else if (parsed.attrs.expires) {
+					const dt = new Date(String(parsed.attrs.expires));
+					if (!isNaN(dt.getTime())) opts.expires = dt;
+				}
+
+				// secure: only set if origin is https AND backend requested secure
+				const backendSecure = !!parsed.attrs.secure;
+				opts.secure = !!(backendSecure && originIsHttps);
+
+				// sameSite: respect backend if valid; if backend wants 'none' but secure is false, fallback to 'lax'
+				if (parsed.attrs.samesite) {
+					const s = String(parsed.attrs.samesite).toLowerCase();
+					if (s === 'none') {
+						opts.sameSite = opts.secure ? 'none' : 'lax';
+					} else if (s === 'strict') opts.sameSite = 'strict';
+					else opts.sameSite = 'lax';
+				} else {
+					opts.sameSite = 'lax';
+				}
+
+				// httpOnly flag
+				opts.httpOnly = !!parsed.attrs.httponly;
+
+				// Set cookie on response for frontend origin (do not set domain)
+				res.cookies.set(parsed.name, parsed.value, opts);
+			} catch (e) {
+				console.warn('[api/login] failed to set parsed cookie', e);
+			}
+		}
+
+		return res;
+	} catch (err: any) {
+		console.error('[api/login] proxy error', err);
+		return NextResponse.json({ ok: false, error: String(err?.message || err) }, { status: 500 });
+	}
+}
