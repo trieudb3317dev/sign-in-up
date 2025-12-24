@@ -4,59 +4,44 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
-function getCookieVariants(...names: string[]) {
-	// return first found cookie among variants
-	if (typeof document === 'undefined') return '';
-	const doc = document.cookie || '';
-	if (!doc) return '';
-	for (const name of names) {
-		const esc = name.replace(/([.*+?^${}()|[\]\\])/g, '\\$1');
-		const match = doc.match(new RegExp('(?:^|; )' + esc + '=([^;]*)'));
-		if (match) return decodeURIComponent(match[1]);
-	}
-	return '';
-}
-
 export const useSecure = () => {
 	const router = useRouter();
 	const { accessToken } = useAuth();
 	const accessTokenRef = useRef<string | null>(null);
 	const initialized = useRef(false);
+	const interceptorsRef = useRef<{ reqId?: number; resId?: number }>({});
 
-	// Update ref whenever accessToken changes
+	// Keep latest accessToken from AuthContext (but don't try to read cookie)
 	useEffect(() => {
-		accessTokenRef.current = accessToken;
+		accessTokenRef.current = accessToken ?? null;
 	}, [accessToken]);
 
-	// Create axios instance with current baseURL
+	// axios instance (same-origin proxy) — cookies are sent with withCredentials
 	const apiSecure = useMemo(() => {
 		return axios.create({
-			baseURL: API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX,
-			withCredentials: true, // <-- ensure cookies are sent with requests
+			baseURL: '/api/proxy',
+			withCredentials: true,
 		});
 	}, []);
 
-	useEffect(() => {
-		if (initialized.current) return;
-
+	// Synchronously register interceptors once (avoid race)
+	if (!initialized.current) {
 		const reqId = apiSecure.interceptors.request.use(
 			function (config) {
-				// Make sure cookies are sent even if server auth uses httpOnly cookie
+				// ensure cookies are sent; server expects HttpOnly cookie auth
 				config.withCredentials = true;
 
-				// Get the latest token from ref (always up-to-date)
-				// Priority 1: Use token from AuthContext (most reliable for cross-origin)
-				// Priority 2: Try to read token from cookie as fallback
-				const token = accessTokenRef.current || getCookieVariants('access_token', 'access-token', 'accessToken', 'token', 'jwt');
-
-				if (token) {
-					config.headers = config.headers ?? {};
-					// attach standard Authorization header
-					(config.headers as any)['Authorization'] = `Bearer ${token}`;
-					console.debug('[apiSecure] Authorization header attached from', accessTokenRef.current ? 'context' : 'cookie');
-				} else {
-					// If token is not readable (likely httpOnly cookie), rely on cookies sent via withCredentials.
-					console.debug('[apiSecure] No readable token found — relying on cookie-based auth via withCredentials');
+				// Only attach Authorization header if accessToken is present in AuthContext
+				// AND the env variable NEXT_PUBLIC_USE_BEARER === 'true' (opt-in)
+				try {
+					const allowBearer = typeof window !== 'undefined' && (process.env.NEXT_PUBLIC_USE_BEARER === 'true');
+					const token = accessTokenRef.current;
+					if (allowBearer && token) {
+						config.headers = config.headers ?? {};
+						(config.headers as any)['Authorization'] = `Bearer ${token}`;
+					}
+				} catch {
+					// ignore
 				}
 
 				return config;
@@ -67,25 +52,39 @@ export const useSecure = () => {
 		);
 
 		const resId = apiSecure.interceptors.response.use(
-			function (response) {
-				return response;
-			},
+			(response) => response,
 			async (error) => {
 				const status = error?.response?.status;
 				if (status === 401 || status === 403) {
+					// if unauthorized, redirect to root/sign-in
 					router.push('/');
 				}
 				return Promise.reject(error);
 			}
 		);
 
+		interceptorsRef.current = { reqId, resId };
 		initialized.current = true;
+	}
 
+	// cleanup on unmount
+	useEffect(() => {
 		return () => {
-			apiSecure.interceptors.request.eject(reqId);
-			apiSecure.interceptors.response.eject(resId);
+			try {
+				if (interceptorsRef.current.reqId !== undefined) {
+					apiSecure.interceptors.request.eject(interceptorsRef.current.reqId);
+				}
+				if (interceptorsRef.current.resId !== undefined) {
+					apiSecure.interceptors.response.eject(interceptorsRef.current.resId);
+				}
+				interceptorsRef.current = {};
+				initialized.current = false;
+			} catch {
+				// ignore
+			}
 		};
-	}, [router, apiSecure]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [apiSecure, router]);
 
 	return apiSecure;
 };

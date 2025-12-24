@@ -34,27 +34,49 @@ export default function RecipeCard({ item, onLike }: { item: Recipe; onLike?: (i
   const apiSecure = useSecure();
 
   React.useEffect(() => {
+    let mounted = true;
     const checkIfLiked = async () => {
-      const res = await WhistlistService.isInWhistlist(apiSecure, Number(item.id));
-      console.log('isInWhistlist', item.id, res);
-      if (res && typeof res === 'boolean') {
-        setLiked(res);
+      try {
+        // pass the axios instance (apiSecure), not .interceptors
+        const res = await WhistlistService.isInWhistlist(apiSecure, Number(item.id));
+        if (!mounted) return;
+        if (typeof res === 'boolean') {
+          setLiked(res);
+        }
+      } catch (err) {
+        // ignore or notify silently
       }
     };
     checkIfLiked();
+    return () => {
+      mounted = false;
+    };
   }, [apiSecure, item.id]);
 
   const toggleLike = async (e?: React.MouseEvent) => {
     e?.stopPropagation();
     e?.preventDefault();
-    setLiked((s) => !s);
-    if (onLike) onLike(item.id);
-    const res = await WhistlistService.addToWhistlist(apiSecure, Number(item.id));
-    if (!res || (res && res.error)) {
-      // revert like state on error
-      notify('error', 'Failed to update whistlist');
+    try {
+      const res = await WhistlistService.addToWhistlist(apiSecure, Number(item.id));
+      // backend may return boolean or object; normalize to boolean
+      let nextLiked: boolean | null = null;
+      if (typeof res === 'boolean') nextLiked = res;
+      else if (res && typeof res === 'object') {
+        if (typeof (res as any).liked === 'boolean') nextLiked = (res as any).liked;
+        else if (typeof (res as any).is_favorite === 'boolean') nextLiked = (res as any).is_favorite;
+      }
+      if (nextLiked === null) {
+        // fallback: toggle local state
+        setLiked((s) => !s);
+        notify('success', !liked ? 'Added to wishlist' : 'Removed from wishlist');
+      } else {
+        setLiked(nextLiked);
+        notify('success', nextLiked ? 'Added to wishlist' : 'Removed from wishlist');
+      }
+      if (onLike) onLike(item.id);
+    } catch (err) {
+      notify('error', 'Failed to update wishlist');
     }
-    notify('success', liked ? 'Removed from whistlist' : 'Added to whistlist');
   };
 
   return (
