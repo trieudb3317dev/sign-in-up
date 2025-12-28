@@ -5,6 +5,7 @@ type RegisterType = {
   username: string;
   email: string;
   password: string;
+  role?: string;
 };
 
 type LoginType = {
@@ -35,7 +36,7 @@ type ForgotPasswordType = {
 type UpdateProfileType = {
   full_name: string;
   avatar: string;
-  gender: 'male' | 'female' | 'other';
+  gender?: 'male' | 'female' | 'other';
   day_of_birth: string;
   phone_number: string;
 };
@@ -45,8 +46,8 @@ export default class AuthAdminService {
    * Register service
    * - apiPublic: axios-like instance (must provide .post)
    */
-  static async register(apiPublic: any, { username, email, password }: RegisterType): Promise<any> {
-    const response = await apiPublic.post('/admin/register', { username, email, password });
+  static async register(apiPublic: any, { username, email, password, role }: RegisterType): Promise<any> {
+    const response = await apiPublic.post('/admin/register', { username, email, password, role });
     return response.data;
   }
 
@@ -95,13 +96,43 @@ export default class AuthAdminService {
     apiPrivate: any,
     { full_name, avatar, gender, day_of_birth, phone_number }: UpdateProfileType
   ): Promise<any> {
-    const response = await apiPrivate.put('/admin/me', {
+    const response = await apiPrivate.put('/admin', {
       full_name,
       avatar,
       gender,
       day_of_birth,
       phone_number,
     });
+    return response.data;
+  }
+
+  static async getAdminList(apiPrivate: any, params?: Record<string, any>): Promise<any> {
+    const q: Record<string, any> = {};
+    if (params?.page != null) q.page = params.page;
+    if (params?.limit != null) q.limit = params.limit;
+    if (params?.sortBy) q.sortBy = params.sortBy;
+    if (params?.sortDir) q.order = String(params.sortDir).toUpperCase();
+    const response = await apiPrivate.get('/admin/admins', { params: q });
+    return response.data;
+  }
+
+  static async getUserList(apiPrivate: any, params?: Record<string, any>): Promise<any> {
+    const q: Record<string, any> = {};
+    if (params?.page != null) q.page = params.page;
+    if (params?.limit != null) q.limit = params.limit;
+    if (params?.sortBy) q.sortBy = params.sortBy;
+    if (params?.sortDir) q.order = String(params.sortDir).toUpperCase();
+    const response = await apiPrivate.get('/admin/users', { params: q });
+    return response.data;
+  }
+
+  static async blockAdmin(apiPrivate: any, adminId: number): Promise<any> {
+    const response = await apiPrivate.put(`/admin/status/${adminId}`);
+    return response.data;
+  }
+
+  static async blockUser(apiPrivate: any, userId: number): Promise<any> {
+    const response = await apiPrivate.put(`/admin/user/status/${userId}`);
     return response.data;
   }
 }

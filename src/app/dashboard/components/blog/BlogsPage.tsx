@@ -6,12 +6,15 @@ import BlogTable from './BlogTable';
 import Pagination from '../Pagination';
 import BlogDetailModal from './BlogDetailModal';
 import CreateBlogModal from './CreateBlogModal';
+import { useAuth } from '@/hooks/useAuth';
 
 type Blog = any;
 
 export default function BlogsPage() {
   const api = useSecure();
   const service = BlogService;
+  const auth = useAuth();
+  const user = auth.auth;
 
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -36,7 +39,11 @@ export default function BlogsPage() {
         params.sortBy = sortBy;
         params.sortDir = sortDir;
       }
-      const res = await service.getAllBlogs(api, params);
+      const res =
+        user && user.role === 'super_admin'
+          ? await service.getAllBlogs(api, params)
+          : await service.getBlogsByAuthor(api, params);
+
       const items = res?.data ?? res;
       const pag = res?.pagination ?? res?.meta ?? {};
       setBlogs(items || []);
@@ -121,6 +128,22 @@ export default function BlogsPage() {
     setSortDir(newDir);
   }
 
+  async function handleExportCSV() {
+    try {
+      const blob = await service.exportBlogsToCSV(api);
+      // create a link to download the blob
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'blogs.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (e) {
+      console.error('export blogs error', e);
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -128,6 +151,9 @@ export default function BlogsPage() {
         <div className="flex items-center gap-2">
           <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={openNew}>
             Create new blog
+          </button>
+          <button className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700" onClick={handleExportCSV}>
+            Export CSV
           </button>
         </div>
       </div>
@@ -147,7 +173,9 @@ export default function BlogsPage() {
       />
 
       <div className="mt-4 flex items-center justify-between">
-        <div className="text-sm text-zinc-600 dark:text-zinc-300">Page {page} / {totalPages}</div>
+        <div className="text-sm text-zinc-600 dark:text-zinc-300">
+          Page {page} / {totalPages}
+        </div>
         <Pagination current={page} total={totalPages} onChange={(p) => setPage(p)} />
       </div>
 

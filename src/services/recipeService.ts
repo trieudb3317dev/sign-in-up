@@ -72,6 +72,15 @@ export default class RecipeService {
   }
 
   /**
+   * Get recipes by creator service
+   * - apiPrivate: axios-like instance (must provide .get)
+   */
+  static async getRecipesByCreator(apiPrivate: any, params?: Record<string, any>): Promise<RecipeResponse> {
+    const response = await apiPrivate.get('/recipes/by-created/me', { params });
+    return response.data;
+  }
+
+  /**
    * Get recipe by ID service
    * - apiPublic: axios-like instance (must provide .get)
    */
@@ -125,6 +134,30 @@ export default class RecipeService {
    */
   static async deleteRecipe(apiPrivate: any, id: number): Promise<{ message: string }> {
     const response = await apiPrivate.delete(`/recipes/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Export recipes to CSV service
+   * - apiPrivate: axios-like instance, only super_admin (must provide .get)
+   */
+  static async exportRecipesToCSV(apiPrivate: any): Promise<Blob> {
+    const response = await apiPrivate.get('/recipes/export/csv');
+    return response.data; // Blob representing the CSV file
+  }
+
+  /**
+   * Import recipes from CSV service
+   * - apiPrivate: axios-like instance, only super_admin (must provide .post)
+   */
+  static async importRecipesFromCSV(apiPrivate: any, file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiPrivate.post('/recipes/import/csv', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 }

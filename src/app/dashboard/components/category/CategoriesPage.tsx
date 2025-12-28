@@ -152,6 +152,20 @@ export default function CategoriesPage() {
     // do not call fetchPage here — effect watching sortBy/sortDir/perPage will run fetchPage
   }
 
+  async function handleExportCSV() {
+    try {
+      const blob = await categoriesService.exportCategoriesToCSV(apiSecure);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'categories.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('export categories error', e);
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -159,6 +173,9 @@ export default function CategoriesPage() {
         <div className="flex items-center gap-2">
           <button className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={openCreate}>
             Create new category
+          </button>
+          <button className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700" onClick={handleExportCSV}>
+            Export CSV
           </button>
         </div>
       </div>

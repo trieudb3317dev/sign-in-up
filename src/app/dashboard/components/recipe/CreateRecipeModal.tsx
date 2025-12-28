@@ -133,7 +133,10 @@ export default function CreateRecipeModal({ open, onClose, onCreate, onUpdate, i
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, { method: 'POST', body: fd });
+      const res = await fetch(`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, {
+        method: 'POST',
+        body: fd,
+      });
       if (!res.ok) throw new Error('upload fail');
       const data = await res.json();
       setImageUrl(data.url || '');
@@ -201,6 +204,19 @@ export default function CreateRecipeModal({ open, onClose, onCreate, onUpdate, i
     } else if (onCreate) {
       onCreate(payload);
       notify('success', 'Recipe created successfully');
+    }
+  }
+
+  async function importCategoriesFromCSV(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      try {
+        await recipeService.importRecipesFromCSV(api, e.target.files[0]);
+        notify('success', 'Recipes imported successfully');
+        onClose();
+      } catch (err) {
+        console.error('import recipes error', err);
+        notify('error', 'Import recipes failed');
+      }
     }
   }
 
@@ -275,13 +291,29 @@ export default function CreateRecipeModal({ open, onClose, onCreate, onUpdate, i
               )}
             </label>
 
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={onClose} className="px-3 py-1 border rounded">
-                Cancel
-              </button>
-              <button type="button" onClick={() => setStep(2)} className="px-3 py-1 bg-blue-600 text-white rounded">
-                Next
-              </button>
+            <div className="flex justify-between mt-4">
+              {/* hidden file input + styled label acting as Import button */}
+              <input
+                id="csv-import-input"
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => importCategoriesFromCSV(e)}
+              />
+              <label
+                htmlFor="csv-import-input"
+                className="w-1/4 text-center bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 px-3 py-2 cursor-pointer select-none"
+              >
+                Import
+              </label>
+              <div className="flex justify-center gap-2">
+                <button type="button" onClick={onClose} className="px-3 py-1 border rounded">
+                  Cancel
+                </button>
+                <button type="button" onClick={() => setStep(2)} className="px-3 py-1 bg-blue-600 text-white rounded">
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         )}

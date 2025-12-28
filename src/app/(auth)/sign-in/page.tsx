@@ -118,7 +118,10 @@ export default function SignInPage() {
 
       router.push(isUser ? '/dashboard' : '/');
       notify('success', 'Sign in successful!');
-      console.log('signin response', data, 'me after login:', meJson);
+      // reload page to ensure auth context is updated
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
     } catch (error: any) {
       const msg = error?.response?.data?.message || error?.message || 'Sign in failed';
       notify('error', msg);

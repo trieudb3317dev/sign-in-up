@@ -27,6 +27,7 @@ export default function SignUpPage() {
   const [remember, setRemember] = React.useState(false);
   const [isUser, setIsUser] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [role, setRole] = React.useState<'admin' | 'editor' | null>(null);
 
   const usernameError = validateName(username);
   const emailError = validateEmail(email);
@@ -43,13 +44,14 @@ export default function SignUpPage() {
       return notify('error', validatePasswordConfirm(password, passwordConfirm));
     if (!remember) return notify('error', 'You must agree to remember me.');
 
+    console.log({ username, email, phone, password, passwordConfirm, isUser, role });
+
     setLoading(true);
     try {
       const data = !isUser
         ? await AuthService.register(apiPublic, { username, email, password })
-        : await AuthAdminService.register(apiPublic, { username, email, password });
+        : await AuthAdminService.register(apiPublic, { username, email, password, role: role ?? 'admin' });
       notify('success', 'Sign up successful!');
-      console.log('signup response', data);
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Sign up failed';
       notify('error', msg);
@@ -156,6 +158,39 @@ export default function SignUpPage() {
         <input type="checkbox" checked={isUser} onChange={(e) => setIsUser(e.target.checked)} className="w-4 h-4" />
         Is admin right?
       </label>
+
+      {isUser && (
+        <>
+          <div className="text-sm text-zinc-500">
+            By checking "Is admin right?", you are registering as an admin user. Make sure you have the necessary
+            permissions.
+          </div>
+          <section className="w-full p-4 mt-2 border border-red-400 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-900 dark:text-red-300 rounded">
+            <option className="w-full" value="">
+              I confirm that I have admin rights.
+            </option>
+            {/** role options */}
+            <select
+              className="w-full mt-2 bg-white dark:bg-[#0b0b0b] border border-red-400 dark:border-red-700 p-2 rounded"
+              value={role as string}
+              onChange={(e) => {
+                setIsUser(e.target.value !== 'user');
+                setRole(e.target.value as 'admin' | 'editor');
+              }}
+            >
+              <option className="w-full" value="admin">
+                Admin
+              </option>
+              <option className="w-full" value="editor">
+                Editor
+              </option>
+              <option className="w-full" value="user">
+                User
+              </option>
+            </select>
+          </section>
+        </>
+      )}
 
       <button
         type="submit"

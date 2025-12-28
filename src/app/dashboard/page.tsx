@@ -10,11 +10,18 @@ import RecipesWhistlistPage from './components/whistlist/RecipesPage';
 import ProfilePage from './components/user/ProfilePage';
 import SettingsPage from './components/user/SettingsPage';
 import ChatBotPage from './components/chatbot/ChatBotPage';
+import AdminsPage from './components/account/AdminsPage';
+import UsersPage from './components/account/UsersPage';
 
 enum Section {
   Categories = 'categories',
   Recipes = 'recipes',
   Blogs = 'blogs',
+  Profile = 'profile',
+  Settings = 'settings',
+  Chatbot = 'chatbot',
+  Admins = 'admins',
+  Users = 'users',
 }
 
 enum UserSection {
@@ -38,12 +45,47 @@ export default function DashboardPage() {
             </aside>
 
             <main className="flex-1 bg-white rounded-lg p-6 shadow-sm dark:bg-zinc-900">
-              {section === Section.Categories && <CategoriesPage />}
-              {section === Section.Recipes && <RecipesPage />}
-              {section === Section.Blogs && <BlogsPage />}
-              {section === ('profile' as any) && <ProfilePage initial={auth?.role ?? undefined} />}
-              {section === ('settings' as any) && <SettingsPage />}
-              {section === ('chatbot' as any) && <ChatBotPage /> }
+              {(() => {
+                if (section === Section.Categories) {
+                  return auth.role === 'super_admin' ? (
+                    <CategoriesPage />
+                  ) : (
+                    <h2 className="text-center text-zinc-500">
+                      Access Denied. Only super admins can access categories.
+                    </h2>
+                  );
+                }
+                if (section === Section.Recipes) return <RecipesPage />;
+                if (section === Section.Blogs) return <BlogsPage />;
+                if (section === Section.Profile) return <ProfilePage initial={auth?.role ?? undefined} />;
+                if (section === Section.Settings) return <SettingsPage />;
+                if (section === Section.Chatbot) {
+                  return auth.role === 'super_admin' ? (
+                    <ChatBotPage />
+                  ) : (
+                    <h2 className="text-center text-zinc-500">Access Denied. Only super admins can access chatbot.</h2>
+                  );
+                }
+                if (section === Section.Admins) {
+                  return auth.role === 'super_admin' ? (
+                    <AdminsPage />
+                  ) : (
+                    <h2 className="text-center text-zinc-500">
+                      Access Denied. Only super admins can access admins list.
+                    </h2>
+                  );
+                }
+                if (section === Section.Users) {
+                  return auth.role === 'super_admin' ? (
+                    <UsersPage />
+                  ) : (
+                    <h2 className="text-center text-zinc-500">
+                      Access Denied. Only super admins can access users list.
+                    </h2>
+                  );
+                }
+                return null;
+              })()}
             </main>
           </div>
         </div>

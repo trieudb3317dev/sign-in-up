@@ -1,7 +1,7 @@
 'use client';
 import { useAuth } from '@/hooks/useAuth';
 
-type MenuKey = 'categories' | 'recipes' | 'blogs' | 'profile' | 'settings' | 'whitelist' | 'chatbot';
+type MenuKey = 'categories' | 'recipes' | 'blogs' | 'profile' | 'settings' | 'whitelist' | 'chatbot' | 'admins' | 'users';
 
 enum RoleAdmin {
   Admin = 'admin',
@@ -30,6 +30,8 @@ export default function Sidebar({ selected, onSelect }: Props) {
     { key: 'recipes', label: 'Recipes' },
     { key: 'blogs', label: 'Blogs' },
     { key: 'chatbot', label: 'Chatbot' },
+    { key: 'admins', label: 'Admins' },
+    { key: 'users', label: 'Users' },
   ];
 
   const userMenu: { key: MenuKey; label: string }[] = [

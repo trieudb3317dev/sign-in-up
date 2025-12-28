@@ -1,5 +1,7 @@
 'use client';
 import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
+import { useSecure } from '@/hooks/useApiSecure';
+import CategoryService from '@/services/categoryService';
 import notify from '@/utils/notify';
 import React, { useEffect, useState } from 'react';
 
@@ -16,6 +18,8 @@ export default function CreateCategoryModal({ open, onClose, onCreate, onUpdate,
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
   const [uploading, setUploading] = useState(false);
+  const apiSecure = useSecure();
+  const categoriesService = CategoryService;
 
   useEffect(() => {
     if (initial) {
@@ -38,7 +42,10 @@ export default function CreateCategoryModal({ open, onClose, onCreate, onUpdate,
       const fd = new FormData();
       fd.append('file', file);
       // expects server endpoint /api/upload that returns { url: string }
-      const res = await fetch(`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, { method: 'POST', body: fd });
+      const res = await fetch(`${API_URL_WITH_PREFIX ?? API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, {
+        method: 'POST',
+        body: fd,
+      });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       setImageUrl(data.url || '');
@@ -60,6 +67,21 @@ export default function CreateCategoryModal({ open, onClose, onCreate, onUpdate,
     } else if (onCreate) {
       onCreate(payload);
       notify('success', 'Category created successfully');
+    }
+  }
+
+  async function importCategoriesFromCSV(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      try {
+        await categoriesService.importCategoriesFromCSV(apiSecure, e.target.files[0]);
+        notify('success', 'Categories imported successfully');
+        onClose();
+      } catch (err) {
+        console.error('import categories error', err);
+      } finally {
+        // clear the value so re-selecting same file will trigger change again
+        (e.target as HTMLInputElement).value = '';
+      }
     }
   }
 
@@ -110,13 +132,29 @@ export default function CreateCategoryModal({ open, onClose, onCreate, onUpdate,
             />
           </label>
 
-          <div className="flex justify-end gap-2 mt-2">
-            <button type="button" onClick={onClose} className="px-3 py-1 border rounded">
-              Cancel
-            </button>
-            <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">
-              {initial ? 'Save' : 'Create'}
-            </button>
+          <div className="flex justify-between mt-2">
+            {/* hidden file input + styled label acting as Import button */}
+            <input
+              id="csv-import-input"
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={async (e) => importCategoriesFromCSV(e)}
+            />
+            <label
+              htmlFor="csv-import-input"
+              className="w-1/4 text-center bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 px-3 py-2 cursor-pointer select-none"
+            >
+              Import
+            </label>
+            <div className="flex justify-center gap-2">
+              <button type="button" onClick={onClose} className="px-3 py-1 border rounded">
+                Cancel
+              </button>
+              <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">
+                {initial ? 'Save' : 'Create'}
+              </button>
+            </div>
           </div>
         </div>
       </form>

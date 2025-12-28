@@ -17,7 +17,6 @@ type QueryParams = {
 };
 
 export default class CategoryService {
-
   /**
    * Get all categories service with pagination / filters
    * - apiPublic: axios-like instance (must provide .get)
@@ -75,6 +74,30 @@ export default class CategoryService {
    */
   static async deleteCategory(apiPrivate: any, id: number): Promise<any> {
     const response = await apiPrivate.delete(`/categories/${id}`);
+    return response.data;
+  }
+
+  /**
+   * Export categories to CSV service
+   * - apiPrivate: axios-like instance, only super_admin (must provide .get)
+   */
+  static async exportCategoriesToCSV(apiPrivate: any): Promise<Blob> {
+    const response = await apiPrivate.get('/categories/export/csv');
+    return response.data; // Blob representing the CSV file
+  }
+
+  /**
+   * Import categories from CSV service
+   * - apiPrivate: axios-like instance, only super_admin (must provide .post)
+   */
+  static async importCategoriesFromCSV(apiPrivate: any, file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiPrivate.post('/categories/import/csv', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 }

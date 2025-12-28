@@ -2,10 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { IoShareOutline, IoPrintOutline } from 'react-icons/io5';
+import { IoShareOutline, IoPrintOutline, IoTelescope } from 'react-icons/io5';
 import Link from 'next/link';
 import usePublic from '@/hooks/useApiPublic';
 import { useRecipes } from '@/hooks/useRecipes';
+import notify from '@/utils/notify';
+import { openGmailCompose, buildRecipeEmailBody, openTelegramShare, openZaloShare } from '@/utils/sharing';
+import { useAuth } from '@/hooks/useAuth';
 
 type IRecipeDetail = {
   id: number;
@@ -46,6 +49,7 @@ type Recipe = {
 export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
   const apiPublic = usePublic();
   const { recipes } = useRecipes();
+  const { auth } = useAuth();
   const [otherRecipes, setOtherRecipes] = React.useState<Recipe[]>([]);
   const [r, setR] = React.useState<IRecipeDetail>({
     id: 0,
@@ -143,6 +147,195 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
     fetchDetail();
   }, [i.id]);
 
+  // new: print preview modal state + ref for printable area
+  const [showPrintModal, setShowPrintModal] = React.useState(false);
+  const printableRef = React.useRef<HTMLDivElement | null>(null);
+
+  const openPrintPreview = () => {
+    setShowPrintModal(true);
+  };
+
+  const closePrintPreview = () => {
+    setShowPrintModal(false);
+  };
+
+  // inject print-only CSS to show only .printable content
+  const doPrint = () => {
+    if (typeof window === 'undefined') return;
+    const contentHtml = printableRef.current ? printableRef.current.innerHTML : '';
+
+    // Build a minimal printable document with inline styles for reliable printing
+    const styles = `
+      html,body{margin:0;padding:20px;font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
+      h1{font-size:20px;margin-bottom:8px;}
+      h2{font-size:16px;margin-top:12px;margin-bottom:6px;}
+      p, li{color:#111;line-height:1.4;}
+      img{max-width:100%;height:auto;}
+      .ingredients, .directions{margin-bottom:12px;}
+      @media print {
+        @page { margin: 20mm; }
+        body { -webkit-print-color-adjust: exact; color-adjust: exact; }
+      }
+    `;
+
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (!printWindow) {
+      // fallback to current window print if popup blocked
+      window.print();
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(`
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8"/>
+          <title>${i.title} - Print</title>
+          <style>${styles}</style>
+        </head>
+        <body>
+          <div class="printable">
+            ${contentHtml}
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    // Wait until images/fonts load, then print
+    const tryPrint = () => {
+      try {
+        printWindow.focus();
+        // call print; if fails due to blocked popup, it will throw
+        printWindow.print();
+      } catch (e) {
+        // fallback: open native print
+        window.print();
+      }
+    };
+
+    // Use load event where possible
+    printWindow.onload = () => {
+      // small timeout to ensure rendering complete
+      setTimeout(tryPrint, 250);
+    };
+    // Also schedule a fallback print after 1s in case onload doesn't fire
+    setTimeout(tryPrint, 1000);
+  };
+
+  // Share recipe (uses Web Share API when available; falls back to Gmail compose / clipboard / mailto)
+  const shareRecipe = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const summary = (r.notes && String(r.notes).trim()) || 'Check out this recipe.';
+    const subject = `Recipe: ${i.title}`;
+
+    const body = buildRecipeEmailBody({
+      title: i.title,
+      summary,
+      url,
+      mainIngredients,
+      senderName: auth?.email,
+    });
+
+    try {
+      // Prefer native Web Share when available (mobile)
+      if (typeof navigator !== 'undefined' && (navigator as any).share) {
+        await (navigator as any).share({ title: i.title, text: summary, url });
+        return;
+      }
+
+      // Try opening Gmail compose in new tab/window with prefilled subject/body and optional recipient
+      // const opened = openGmailCompose(undefined, subject, body);
+      // if (opened) return;
+
+      // Fallback: copy URL to clipboard and notify user
+      if (typeof navigator !== 'undefined' && (navigator as any).clipboard && url) {
+        await (navigator as any).clipboard.writeText(url);
+        notify('success', 'Link copied to clipboard. You can paste it into your email.');
+        return;
+      }
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    } catch (err: any) {
+      try {
+        if (url && typeof navigator !== 'undefined' && (navigator as any).clipboard) {
+          await (navigator as any).clipboard.writeText(url);
+          notify('success', 'Link copied to clipboard');
+        } else {
+          notify('error', 'Unable to share. Please copy the link manually.');
+        }
+      } catch {
+        notify('error', 'Unable to share. Please copy the link manually.');
+      }
+    }
+  };
+
+  // Share recipe to Zalo (Vietnam popular messenger)
+  const shareToZalo = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const text = `${i.title}\n\n${(r.notes && String(r.notes).trim()) || ''}`.trim();
+    try {
+      const opened = openZaloShare(url, text);
+      if (!opened) {
+        if (typeof navigator !== 'undefined' && (navigator as any).clipboard && url) {
+          await (navigator as any).clipboard.writeText(url);
+          notify('success', 'Zalo share opened blocked — link copied to clipboard');
+        } else {
+          notify('error', 'Unable to open Zalo share. Please copy the link manually.');
+        }
+      }
+    } catch (err) {
+      notify('error', 'Unable to share via Zalo.');
+    }
+  };
+
+  // Share recipe to Telegram
+  const shareToTelegram = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const text = `${i.title} - ${(r.notes && String(r.notes).trim()) || ''}`.trim();
+    try {
+      const opened = openTelegramShare(url, text);
+      if (!opened) {
+        if (typeof navigator !== 'undefined' && (navigator as any).clipboard && url) {
+          await (navigator as any).clipboard.writeText(url);
+          notify('success', 'Telegram share opened blocked — link copied to clipboard');
+        } else {
+          notify('error', 'Unable to open Telegram share. Please copy the link manually.');
+        }
+      }
+    } catch (err) {
+      notify('error', 'Unable to share via Telegram.');
+    }
+  };
+
+  // convenience: print then close modal (download flow)
+  const handlePrintAndClose = () => {
+    doPrint();
+    // close preview modal (user still receives print dialog)
+    setShowPrintModal(false);
+  };
+
+  // safe derived ingredient lists
+  const mainIngredients = React.useMemo(() => {
+    const raw = r?.ingredients?.[0]?.main ?? '';
+    return typeof raw === 'string'
+      ? raw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+  }, [r.ingredients]);
+
+  const sauceIngredients = React.useMemo(() => {
+    const raw = r?.ingredients?.[0]?.sauce ?? '';
+    return typeof raw === 'string'
+      ? raw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+  }, [r.ingredients]);
+
   return (
     <article className="w-full max-w-6xl mx-auto p-6">
       <h1 className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-100 mb-6">{i.title}</h1>
@@ -185,10 +378,18 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="rounded-full bg-zinc-100 dark:bg-zinc-800 p-3">
+          <button
+            onClick={openPrintPreview}
+            className="rounded-full bg-zinc-100 dark:bg-zinc-800 p-3"
+            aria-label="Preview print"
+          >
             <IoPrintOutline />
           </button>
-          <button className="rounded-full bg-zinc-100 dark:bg-zinc-800 p-3">
+          <button
+            className="rounded-full bg-zinc-100 dark:bg-zinc-800 p-3"
+            onClick={shareRecipe}
+            aria-label="Share recipe"
+          >
             <IoShareOutline />
           </button>
         </div>
@@ -227,8 +428,8 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
                   </div>
                 )}
               </>
-            ) : (
-              // native video mode
+            ) : // native video mode
+            r?.recipe_video ? (
               <div
                 className="w-full h-[420px] relative bg-zinc-100 dark:bg-zinc-900 cursor-pointer"
                 onClick={async () => {
@@ -243,12 +444,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
                   }
                 }}
               >
-                <video
-                  ref={videoRef}
-                  src={r?.recipe_video ?? '#'}
-                  controls
-                  className="w-full h-full object-cover bg-black"
-                />
+                <video ref={videoRef} src={r.recipe_video} controls className="w-full h-full object-cover bg-black" />
 
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <button
@@ -271,6 +467,11 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
                   </button>
                 </div>
               </div>
+            ) : (
+              // placeholder when no video source
+              <div className="w-full h-[420px] bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center">
+                <div className="text-zinc-500">No video available</div>
+              </div>
             )}
           </div>
 
@@ -286,7 +487,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
               <h4 className="text-lg font-semibold mb-4">Ingredients</h4>
               <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">For main dish</div>
               <ul className="space-y-3 mb-4">
-                {r.ingredients[0]?.main.split(',').map((it, idx) => (
+                {mainIngredients.map((it, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <input type="checkbox" className="mt-1" />
                     <span className="text-sm text-zinc-800 dark:text-zinc-100">{it}</span>
@@ -296,7 +497,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
 
               <div className="text-sm text-zinc-600 dark:text-zinc-400 mb-3">For the sauce</div>
               <ul className="space-y-3">
-                {r.ingredients[0]?.sauce.split(',').map((it, idx) => (
+                {sauceIngredients.map((it, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <input type="checkbox" className="mt-1" />
                     <span className="text-sm text-zinc-800 dark:text-zinc-100">{it}</span>
@@ -328,7 +529,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
                     </div>
                   </Link>
                 ))}
-              </div>     
+              </div>
 
               <div className="mt-6 hidden md:block">
                 <div className="rounded-lg overflow-hidden">
@@ -403,6 +604,84 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
           </div>
         </aside>
       </div>
+
+      {/* Print Preview Modal */}
+      {showPrintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={closePrintPreview} />
+          <div className="relative max-w-4xl w-full bg-white dark:bg-[#071018] rounded-lg shadow-lg overflow-auto max-h-[90vh]">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="text-lg font-semibold">Print preview</div>
+              <div className="flex items-center gap-2">
+                <button onClick={handlePrintAndClose} className="px-3 py-1 bg-sky-600 text-white rounded">
+                  Print / Save as PDF
+                </button>
+                <button onClick={doPrint} className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded">
+                  Print (keep preview)
+                </button>
+                <button onClick={closePrintPreview} className="px-3 py-1 bg-transparent rounded">
+                  Close
+                </button>
+              </div>
+            </div>
+
+            {/* printable content */}
+            <div ref={printableRef} className="p-6 printable">
+              {/* Reuse key parts of detail: title, hero image, ingredients, directions */}
+              <h1 className="text-2xl font-bold mb-2">{i.title}</h1>
+              <div className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+                {i.admin.username} — {i.category.name}
+              </div>
+
+              {r.recipe_video && (
+                <div className="mb-4">
+                  {/* if video is YouTube, show embed link poster; for printing we show a poster image or URL */}
+                  {isYouTube ? (
+                    <div className="bg-black text-white p-6 rounded">YouTube video: {r.recipe_video}</div>
+                  ) : (
+                    <div className="w-full h-48 bg-black/80 rounded overflow-hidden flex items-center justify-center text-white">
+                      Video preview
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <section className="mb-4">
+                <h2 className="font-semibold mb-2">Ingredients</h2>
+                <ul className="list-disc pl-6 text-sm">
+                  {mainIngredients.map((it, idx) => (
+                    <li key={idx}>{it}</li>
+                  ))}
+                </ul>
+                <div className="mt-3">
+                  <h3 className="font-medium">Sauce</h3>
+                  <ul className="list-disc pl-6 text-sm">
+                    {sauceIngredients.map((it, idx) => (
+                      <li key={idx}>{it}</li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+
+              <section className="mb-4">
+                <h2 className="font-semibold mb-2">Directions</h2>
+                <ol className="list-decimal pl-6 text-sm">
+                  {r.steps.map((d, idx) => (
+                    <li key={idx} className="mb-2">
+                      {d.step}
+                    </li>
+                  ))}
+                </ol>
+              </section>
+
+              <section className="mb-4">
+                <h2 className="font-semibold mb-2">Notes</h2>
+                <p className="text-sm">{r.notes}</p>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

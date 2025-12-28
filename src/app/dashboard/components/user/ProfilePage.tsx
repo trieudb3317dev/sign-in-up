@@ -4,6 +4,7 @@ import { useSecure } from '@/hooks/useApiSecure';
 import notify from '@/utils/notify';
 import { API_URL_WITH_PREFIX, API_URL_DEVELOPMENT_WITH_PREFIX } from '@/config/contant.config';
 import AuthService from '@/services/authService';
+import AuthAdminService from '@/services/adminAuthService';
 
 type Props = {
   initial?: any; // optional initial profile object
@@ -36,7 +37,10 @@ export default function ProfilePage({ initial }: Props) {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await fetch(`${API_URL_WITH_PREFIX || API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, { method: 'POST', body: fd });
+      const res = await fetch(`${API_URL_WITH_PREFIX || API_URL_DEVELOPMENT_WITH_PREFIX}/cloudinary/upload`, {
+        method: 'POST',
+        body: fd,
+      });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       setAvatar(data.url || '');
@@ -44,21 +48,29 @@ export default function ProfilePage({ initial }: Props) {
       console.error('upload error', err);
       notify('error', 'Upload failed');
     } finally {
-      setUploading(false);  
+      setUploading(false);
     }
   }
 
   async function handleUpdate() {
     setSaving(true);
     try {
-      const payload = {
+      // build payload and only include gender when it's set (not empty string)
+      const payload: any = {
         full_name: fullName,
         avatar,
-        gender,
         day_of_birth: dayOfBirth,
         phone_number: phoneNumber,
       };
-      await AuthService.updateProfile(api, payload);
+      if (gender) {
+        payload.gender = gender as 'male' | 'female' | 'other';
+      }
+
+      {
+        initial && initial !== undefined && initial !== 'user'
+          ? await AuthAdminService.updateProfile(api, payload)
+          : await AuthService.updateProfile(api, payload);
+      }
       notify('success', 'Profile updated');
     } catch (err) {
       console.error('update profile', err);

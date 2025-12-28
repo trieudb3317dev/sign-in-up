@@ -116,14 +116,7 @@ export default function RecipeDetailModal({ open, onClose, recipe }: Props) {
         {nutritionItems.length > 0 && (
           <div className="mt-4">
             <h4 className="font-semibold">Nutrition</h4>
-
-            {/* Keep original list for quick reading */}
-            <ul className="list-disc pl-5 text-sm mt-2">
-              {nutritionItems.map((n: string, i: number) => (
-                <li key={i}>{n}</li>
-              ))}
-            </ul>
-
+            
             {/* Structured Nutrition Facts table */}
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm border-collapse">

@@ -59,7 +59,7 @@ export default function Header() {
             <Link href="/" className="text-2xl font-extrabold text-zinc-900 dark:text-zinc-100">
               Recipes Chef
             </Link>
-            {!auth || auth.role !== 'admin' ? (
+            {!auth || (auth.role !== 'admin' && auth.role !== 'editor' && auth.role !== 'super_admin') ? (
               <nav className="hidden md:flex items-center gap-2">
                 <Link
                   href="/"

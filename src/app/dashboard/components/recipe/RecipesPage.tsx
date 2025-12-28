@@ -6,12 +6,15 @@ import Pagination from '../Pagination';
 import RecipeTable from './RecipeTable';
 import CreateRecipeModal from './CreateRecipeModal';
 import RecipeDetailModal from './RecipeDetailModal';
+import { useAuth } from '@/hooks/useAuth';
 
 type Recipe = any;
 
 export default function RecipesPage() {
   const apiSecure = useSecure();
   const service = RecipeService;
+  const auth = useAuth();
+  const user = auth.auth;
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [page, setPage] = useState<number>(1);
@@ -36,7 +39,11 @@ export default function RecipesPage() {
         params.sortBy = sortBy;
         params.sortDir = sortDir;
       }
-      const res = await service.getAllRecipes(apiSecure, params);
+      const res =
+        user && user.role === 'super_admin'
+          ? await service.getAllRecipes(apiSecure, params)
+          : await service.getRecipesByCreator(apiSecure, params);
+
       setRecipes(res.data || []);
       const pag = res.pagination || {};
       setTotalPages(pag.totalPages ?? 1);
@@ -123,6 +130,20 @@ export default function RecipesPage() {
     }
   }
 
+  async function handleExportCSV() {
+    try {
+      const blob = await service.exportRecipesToCSV(apiSecure);
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'recipes.csv';
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('export recipes error', e);
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -130,6 +151,9 @@ export default function RecipesPage() {
         <div className="flex items-center gap-2">
           <button className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={openCreateModal}>
             Create new recipe
+          </button>
+          <button className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700" onClick={handleExportCSV}>
+            Export CSV
           </button>
         </div>
       </div>

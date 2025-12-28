@@ -1,6 +1,8 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import notify from '@/utils/notify';
+import BlogService from '@/services/blogService';
+import { useSecure } from '@/hooks/useApiSecure';
 
 type ContentItem = { heading: string; body: string; image?: string };
 
@@ -19,6 +21,8 @@ export default function CreateBlogModal({ open, onClose, onCreate, onUpdate, ini
   const [notes, setNotes] = useState('');
   const [content, setContent] = useState<ContentItem[]>([{ heading: '', body: '', image: '' }]);
   const [uploading, setUploading] = useState(false);
+  const service = BlogService; // placeholder for blog service
+  const api = useSecure();
 
   useEffect(() => {
     if (initial) {
@@ -78,33 +82,91 @@ export default function CreateBlogModal({ open, onClose, onCreate, onUpdate, ini
     }
   }
 
+  async function importBlogsFromCSV(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      try {
+        await service.importBlogsFromCSV(api, e.target.files[0]);
+        notify('success', 'Blogs imported successfully');
+        onClose();
+      } catch (err) {
+        console.error('import blogs error', err);
+        notify('error', 'Import failed');
+      }
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/40 p-6">
       <form onSubmit={submitFinal} className="bg-white dark:bg-zinc-800 rounded p-6 w-full max-w-3xl shadow my-10">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold">{initial ? 'Edit Blog' : 'Create Blog'}</h3>
-          <button type="button" onClick={onClose} className="text-sm px-2 py-1">Close</button>
+          <button type="button" onClick={onClose} className="text-sm px-2 py-1">
+            Close
+          </button>
         </div>
 
         {step === 1 && (
           <div className="mt-4 space-y-3">
-            <label className="text-sm">Title<input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full mt-1 px-2 py-1 border rounded" /></label>
+            <label className="text-sm">
+              Title
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full mt-1 px-2 py-1 border rounded"
+              />
+            </label>
 
             <label className="text-sm">
               Image
               <div className="flex items-center gap-3 mt-1">
                 <input type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0])} />
-                {uploading ? <span className="text-sm">Uploading...</span> : imageUrl ? <img src={imageUrl} alt="preview" className="h-12 w-12 object-cover rounded" /> : null}
+                {uploading ? (
+                  <span className="text-sm">Uploading...</span>
+                ) : imageUrl ? (
+                  <img src={imageUrl} alt="preview" className="h-12 w-12 object-cover rounded" />
+                ) : null}
               </div>
               <div className="text-xs text-zinc-500 mt-1">Or enter image URL</div>
-              <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} className="w-full mt-1 px-2 py-1 border rounded text-sm" />
+              <input
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="w-full mt-1 px-2 py-1 border rounded text-sm"
+              />
             </label>
 
-            <label className="text-sm">Notes<textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full mt-1 px-2 py-1 border rounded" rows={3} /></label>
+            <label className="text-sm">
+              Notes
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full mt-1 px-2 py-1 border rounded"
+                rows={3}
+              />
+            </label>
 
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
-              <button type="button" onClick={() => setStep(2)} className="px-3 py-1 bg-blue-600 text-white rounded">Next</button>
+            <div className="flex justify-between mt-2">
+              {/* hidden file input + styled label acting as Import button */}
+              <input
+                id="csv-import-input"
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => importBlogsFromCSV(e)}
+              />
+              <label
+                htmlFor="csv-import-input"
+                className="w-1/4 text-center bg-blue-600 dark:bg-blue-700 text-white rounded hover:bg-blue-700 px-3 py-2 cursor-pointer select-none"
+              >
+                Import
+              </label>
+              <div className="flex justify-center gap-2">
+                <button type="button" onClick={onClose} className="px-3 py-1 border rounded">
+                  Cancel
+                </button>
+                <button type="button" onClick={() => setStep(2)} className="px-3 py-1 bg-blue-600 text-white rounded">
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -114,26 +176,59 @@ export default function CreateBlogModal({ open, onClose, onCreate, onUpdate, ini
             <h4 className="font-semibold">Content Sections</h4>
             {content.map((c, idx) => (
               <div key={idx} className="border p-3 rounded mb-2">
-                <label className="text-sm">Heading<input value={c.heading} onChange={(e) => setContent((s) => s.map((it, i) => i === idx ? { ...it, heading: e.target.value } : it))} className="w-full mt-1 px-2 py-1 border rounded" /></label>
-                <label className="text-sm">Body<textarea value={c.body} onChange={(e) => setContent((s) => s.map((it, i) => i === idx ? { ...it, body: e.target.value } : it))} className="w-full mt-1 px-2 py-1 border rounded" rows={3} /></label>
+                <label className="text-sm">
+                  Heading
+                  <input
+                    value={c.heading}
+                    onChange={(e) =>
+                      setContent((s) => s.map((it, i) => (i === idx ? { ...it, heading: e.target.value } : it)))
+                    }
+                    className="w-full mt-1 px-2 py-1 border rounded"
+                  />
+                </label>
+                <label className="text-sm">
+                  Body
+                  <textarea
+                    value={c.body}
+                    onChange={(e) =>
+                      setContent((s) => s.map((it, i) => (i === idx ? { ...it, body: e.target.value } : it)))
+                    }
+                    className="w-full mt-1 px-2 py-1 border rounded"
+                    rows={3}
+                  />
+                </label>
 
                 <div className="flex items-center gap-3 mt-2">
                   <input type="file" accept="image/*" onChange={(e) => handleFile(e.target.files?.[0], idx)} />
                   {c.image ? <img src={c.image} alt="sec" className="h-12 w-12 object-cover rounded" /> : null}
-                  <button type="button" onClick={() => removeContent(idx)} className="px-2 py-1 border rounded text-red-600">Remove</button>
+                  <button
+                    type="button"
+                    onClick={() => removeContent(idx)}
+                    className="px-2 py-1 border rounded text-red-600"
+                  >
+                    Remove
+                  </button>
                 </div>
               </div>
             ))}
 
             <div className="flex gap-2">
-              <button type="button" onClick={addContent} className="px-3 py-1 border rounded">Add section</button>
+              <button type="button" onClick={addContent} className="px-3 py-1 border rounded">
+                Add section
+              </button>
             </div>
 
             <div className="flex justify-between gap-2 mt-4">
-              <button type="button" onClick={() => setStep(1)} className="px-3 py-1 border rounded">Back</button>
+              <button type="button" onClick={() => setStep(1)} className="px-3 py-1 border rounded">
+                Back
+              </button>
               <div className="flex gap-2">
-                <button type="button" onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
-                <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">{initial ? 'Save' : 'Create'}</button>
+                <button type="button" onClick={onClose} className="px-3 py-1 border rounded">
+                  Cancel
+                </button>
+                <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">
+                  {initial ? 'Save' : 'Create'}
+                </button>
               </div>
             </div>
           </div>
