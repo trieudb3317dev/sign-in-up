@@ -34,7 +34,7 @@ function AuthLayoutContent({ children, title }: { children: React.ReactNode; tit
     pathname.includes('/sign-in') || pathname.includes('/(auth)/sign-in') || pathname.includes('/module/auth/sign-in');
   title = title ?? (isSignIn ? 'Welcome back!' : 'Create your account!');
   const auth_background =
-    'https://res.cloudinary.com/dmdzyoslx/image/upload/v1763100684/avatars/73879289-c33d-4d86-890a-60f0af7fd9e1.jpg';
+    'https://res.cloudinary.com/dmdzyoslx/image/upload/v1766944515/my_images/ebyymj5sgez1tz9ucbzu.webp';
 
   const { theme, setTheme } = useTheme();
   const [localTheme, setLocalTheme] = React.useState<'light' | 'dark' | 'system'>('system');
