@@ -9,6 +9,7 @@ import { useRecipes } from '@/hooks/useRecipes';
 import notify from '@/utils/notify';
 import { openGmailCompose, buildRecipeEmailBody, openTelegramShare, openZaloShare } from '@/utils/sharing';
 import { useAuth } from '@/hooks/useAuth';
+import RecipeComments from './RecipeComments';
 
 type IRecipeDetail = {
   id: number;
@@ -534,7 +535,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
               <div className="mt-6 hidden md:block">
                 <div className="rounded-lg overflow-hidden">
                   <Image
-                    src="/images/recipes/8.jpg"
+                    src={i.image_url || '/images/promo.jpg'}
                     alt="promo"
                     width={300}
                     height={180}
@@ -577,6 +578,9 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
               ))}
             </ol>
           </div>
+
+          {/* Comments: add/edit comments & rating */}
+          <RecipeComments recipeId={i.id} />
         </div>
 
         {/* Sidebar (sticky) */}
@@ -598,7 +602,24 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
             {/* small promo card */}
             <div className="hidden md:block">
               <div className="rounded-2xl overflow-hidden">
-                <Image src="/images/promo.jpg" alt="promo" width={380} height={220} className="object-cover w-full" />
+                <Image
+                  src={i.image_url || '/images/promo.jpg'}
+                  alt="promo"
+                  width={380}
+                  height={220}
+                  className="object-cover w-full"
+                />
+              </div>
+              {/** Logic & components for comments */}
+              <div className="mt-4 p-4 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-center">
+                <IoTelescope className="mx-auto mb-2 text-2xl text-zinc-600 dark:text-zinc-400" />
+                <div className="text-sm text-zinc-700 dark:text-zinc-300">
+                  Explore more recipes in our{' '}
+                  <Link href="/recipes" className="text-sky-600">
+                    Recipe Collection
+                  </Link>
+                  !
+                </div>
               </div>
             </div>
           </div>
