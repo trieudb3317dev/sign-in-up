@@ -14,9 +14,11 @@ import notify from '@/utils/notify';
 import AuthService from '@/services/authService';
 import usePublic from '@/hooks/useApiPublic';
 import AuthAdminService from '@/services/adminAuthService';
+import { useRouter } from 'next/navigation';
 
 export default function SignUpPage() {
   const apiPublic = usePublic();
+  const router = useRouter();
   const [username, setUsername] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [phone, setPhone] = React.useState('');
@@ -52,6 +54,10 @@ export default function SignUpPage() {
         ? await AuthService.register(apiPublic, { username, email, password })
         : await AuthAdminService.register(apiPublic, { username, email, password, role: role ?? 'admin' });
       notify('success', 'Sign up successful!');
+      // navigate to verify page and include username so user can follow email link
+      router.push(
+        `/verify-account?username=${encodeURIComponent(username)}${!isUser ? '' : `&role=${encodeURIComponent(role ?? 'admin')}`}`
+      );
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Sign up failed';
       notify('error', msg);
