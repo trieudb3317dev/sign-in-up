@@ -70,7 +70,7 @@ export default function VerifyAccountPage() {
         <>
           <p className="text-sm text-zinc-600 mb-4">
             Hi <strong>{username}</strong>. Vui lòng kiểm tra email và bấm link xác thực. Nếu bạn đã mở link trên mail
-            thì hệ thống sẽ tự xác thực. Bạn cũng có thể nhập mã xác thực bên dưới.
+            thì hệ thống sẽ tự xác thực. Bạn cũng có thể nhập mã xác thực bên dưới. Neu không thấy email hãy kiểm tra hộp thư rác.
           </p>
 
           <div className="space-y-3">
