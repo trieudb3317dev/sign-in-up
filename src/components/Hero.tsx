@@ -77,28 +77,7 @@ export default function Hero({
           </div>
         </div>
       </div>
-      {/* small animations - add simple keyframes via Tailwind utilities (if configured) or global css */}
-      <style jsx>{`
-        .animate-float {
-          transform-origin: center;
-          animation: float 4s ease-in-out infinite;
-        }
-        .animate-float-small {
-          transform-origin: center;
-          animation: float 3.2s ease-in-out infinite;
-        }
-        @keyframes float {
-          0% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-8px);
-          }
-          100% {
-            transform: translateY(0px);
-          }
-        }
-      `}</style>
+      {/* small animations moved to global CSS (avoids styled-jsx generated className mismatches during hydration) */}
     </section>
   );
 }

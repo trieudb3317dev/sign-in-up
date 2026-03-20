@@ -346,11 +346,11 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
         <div className="flex items-center gap-6 text-sm text-zinc-600 dark:text-zinc-400">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-zinc-200 overflow-hidden">
-              <Image src="/images/avatar.png" alt={i.admin.username ?? 'Author'} width={40} height={40} />
+              <Image src="/images/avatar.png" alt={i?.admin?.username ?? 'Author'} width={40} height={40} />
             </div>
             <div>
               <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {i.admin.username ?? 'John Smith'}
+                {i?.admin?.username ?? 'John Smith'}
               </div>
               <div className="text-xs">{'15 March 2022'}</div>
             </div>
@@ -535,7 +535,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
               <div className="mt-6 hidden md:block">
                 <div className="rounded-lg overflow-hidden">
                   <Image
-                    src={i.image_url || '/images/promo.jpg'}
+                    src={i?.image_url || '/images/promo.jpg'}
                     alt="promo"
                     width={300}
                     height={180}
@@ -603,7 +603,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
             <div className="hidden md:block">
               <div className="rounded-2xl overflow-hidden">
                 <Image
-                  src={i.image_url || '/images/promo.jpg'}
+                  src={i?.image_url || '/images/promo.jpg'}
                   alt="promo"
                   width={380}
                   height={220}
@@ -651,7 +651,7 @@ export default function RecipeDetail({ recipe }: { recipe: Recipe }) {
               {/* Reuse key parts of detail: title, hero image, ingredients, directions */}
               <h1 className="text-2xl font-bold mb-2">{i.title}</h1>
               <div className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
-                {i.admin.username} — {i.category.name}
+                {i?.admin?.username ?? 'Author'} — {i?.category?.name ?? ''}
               </div>
 
               {r.recipe_video && (
