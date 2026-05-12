@@ -55,10 +55,10 @@ export default function SignUpPage() {
         : await AuthAdminService.register(apiPublic, { username, email, password, role: role ?? 'admin' });
       notify('success', 'Sign up successful!');
       // navigate to verify page and include username so user can follow email link
-      // router.push(
-      //   `/verify-account?username=${encodeURIComponent(username)}${!isUser ? '' : `&role=${encodeURIComponent(role ?? 'admin')}`}`
-      // );
-      router.push('/sign-in');
+      router.push(
+        `/verify-account?username=${encodeURIComponent(username)}${!isUser ? '' : `&role=${encodeURIComponent(role ?? 'admin')}`}`
+      );
+      // router.push('/sign-in');
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Sign up failed';
       notify('error', msg);
